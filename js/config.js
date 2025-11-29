@@ -14,41 +14,44 @@ const CONFIG = {
 
     limits: { desktopMax: 50, mobileScreenMax: 20, folderMax: 10 },
 
-    // 默认图标 (调整了 x, y 坐标，增加 color)
-    // 手机屏幕高度大概是 680px，底部 Dock 区域大概在 y=580 左右
+    // === 关键修改：默认图标的颜色 ===
     defaultIcons: {
         windows: [
-            { name: "我的电脑", icon: "fa-solid fa-desktop", color: "#fff", x: 20, y: 20 },
-            { name: "回收站", icon: "fa-solid fa-trash-can", color: "#dfe6e9", x: 20, y: 120 }
+            // 我的电脑：蓝色
+            { name: "我的电脑", icon: "fa-solid fa-desktop", color: "#0984e3", x: 20, y: 20 },
+            // 回收站：深灰
+            { name: "回收站", icon: "fa-solid fa-trash-can", color: "#636e72", x: 20, y: 120 }
         ],
         macos: [
-            { name: "Macintosh HD", icon: "fa-solid fa-hard-drive", color: "#dfe6e9", x: 1100, y: 20 },
+            // Mac 硬盘：银灰色
+            { name: "Macintosh HD", icon: "fa-solid fa-hard-drive", color: "#bdc3c7", x: 1100, y: 20 },
         ],
         ubuntu: [
-            { name: "Home", icon: "fa-solid fa-house", color: "#fff", x: 20, y: 20 },
-            { name: "Trash", icon: "fa-solid fa-trash", color: "#dfe6e9", x: 20, y: 120 }
+            // Home：橙色
+            { name: "Home", icon: "fa-solid fa-house", color: "#e67e22", x: 20, y: 20 },
+            { name: "Trash", icon: "fa-solid fa-trash", color: "#bdc3c7", x: 20, y: 120 }
         ],
         android: [
-            // 放在底部
-            { name: "电话", icon: "fa-solid fa-phone", color: "#2ecc71", x: 20, y: 560 },
-            { name: "信息", icon: "fa-solid fa-comment", color: "#3498db", x: 100, y: 560 },
-            { name: "Chrome", icon: "fa-brands fa-chrome", color: "#f1c40f", x: 180, y: 560 },
-            { name: "相机", icon: "fa-solid fa-camera", color: "#95a5a6", x: 260, y: 560 },
-            // 放在上面几个
-            { name: "时钟", icon: "fa-solid fa-clock", color: "#fff", x: 20, y: 80 }
+            // 底部 Dock 应用
+            { name: "电话", icon: "fa-solid fa-phone", color: "#2ecc71", x: 25, y: 560 },
+            { name: "信息", icon: "fa-solid fa-comment", color: "#3498db", x: 95, y: 560 },
+            { name: "Chrome", icon: "fa-brands fa-chrome", color: "#f1c40f", x: 165, y: 560 },
+            { name: "相机", icon: "fa-solid fa-camera", color: "#95a5a6", x: 235, y: 560 },
+            // 桌面应用
+            { name: "时钟", icon: "fa-solid fa-clock", color: "#fff", x: 25, y: 60 }
         ],
         ios: [
-            // 放在底部
-            { name: "电话", icon: "fa-solid fa-phone", color: "#2ecc71", x: 20, y: 560 },
-            { name: "Safari", icon: "fa-brands fa-safari", color: "#3498db", x: 100, y: 560 },
-            { name: "邮件", icon: "fa-solid fa-envelope", color: "#3498db", x: 180, y: 560 },
-            { name: "音乐", icon: "fa-solid fa-music", color: "#e74c3c", x: 260, y: 560 },
-             // 放在上面
-            { name: "设置", icon: "fa-solid fa-gear", color: "#95a5a6", x: 20, y: 80 }
+            // 底部 Dock 应用
+            { name: "电话", icon: "fa-solid fa-phone", color: "#2ecc71", x: 25, y: 560 },
+            { name: "Safari", icon: "fa-brands fa-safari", color: "#3498db", x: 95, y: 560 },
+            { name: "邮件", icon: "fa-solid fa-envelope", color: "#3498db", x: 165, y: 560 },
+            { name: "音乐", icon: "fa-solid fa-music", color: "#e74c3c", x: 235, y: 560 },
+            // 桌面应用
+            { name: "设置", icon: "fa-solid fa-gear", color: "#bdc3c7", x: 25, y: 60 }
         ]
     },
 
-    // 工具栏分类数据 (Sidebar) - 增加了 color 字段
+    // 工具栏分类数据 (Sidebar)
     sidebarTools: {
         windows: [
             {

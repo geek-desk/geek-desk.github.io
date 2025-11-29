@@ -4,8 +4,10 @@
 const SUPABASE_URL = 'https://rjhmezzyjntpcvlycece.supabase.co'; 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqaG1lenp5am50cGN2bHljZWNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDAzMDIsImV4cCI6MjA3OTk3NjMwMn0.pi5M3kcu-CaJY0ryry8phi9E-SQdRKHGmxsJGIckANA';
 
-// 初始化 Supabase 客户端
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ** 修复 Uncaught ReferenceError **
+// 使用全局加载的 'supabase' 对象来创建客户端，并将其结果赋值给新的变量 'supabaseClient'。
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
 // --- 桌面图标数据 (使用 CDN 图片作为示例) ---
 const initialIcons = [
@@ -58,7 +60,7 @@ $(document).ready(function() {
     const $authModal = $('#auth-modal');
     
     // 检查当前会话状态
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
         if (session) {
             $authModal.addClass('modal-hidden');
             console.log('当前用户已登录:', session.user);
@@ -93,7 +95,8 @@ $(document).ready(function() {
         const email = $('#auth-email').val();
         const password = $('#auth-password').val();
         
-        const { data: { session }, error } = await supabase.auth.signInWithPassword({
+        // 使用 supabaseClient
+        const { data: { session }, error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password,
         });
@@ -105,7 +108,8 @@ $(document).ready(function() {
         const email = $('#auth-email').val();
         const password = $('#auth-password').val();
         
-        const { error } = await supabase.auth.signUp({
+        // 使用 supabaseClient
+        const { error } = await supabaseClient.auth.signUp({
             email: email,
             password: password,
         });
@@ -119,7 +123,8 @@ $(document).ready(function() {
 
     // 4. 登出事件处理
     $('#logout-btn').on('click', async function() {
-        const { error } = await supabase.auth.signOut();
+        // 使用 supabaseClient
+        const { error } = await supabaseClient.auth.signOut();
         if (error) {
             alert('登出失败: ' + error.message);
         } else {
@@ -129,7 +134,7 @@ $(document).ready(function() {
 
 
     // 5. 实时监听认证状态变化 (处理登出后模态框的显示)
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT' || !session) {
             console.log('用户已登出或会话无效');
             $authModal.removeClass('modal-hidden');

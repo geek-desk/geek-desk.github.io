@@ -1,5 +1,5 @@
 // js/drag-handler.js
-// 图标拖放处理和位置保存 (新增：侧边栏拖动到桌面逻辑)
+// 图标拖放处理和位置保存 (已实现：现有图标移动 + 侧边栏拖动到桌面创建新图标)
 
 $(document).ready(function() {
     let isDraggingExisting = false;
@@ -16,7 +16,6 @@ $(document).ready(function() {
         isDraggingExisting = true;
         $draggedIcon = $(this);
         
-        // 计算鼠标点击点与图标左上角的偏移量
         offsetX = e.clientX - $draggedIcon.offset().left;
         offsetY = e.clientY - $draggedIcon.offset().top;
         
@@ -25,7 +24,6 @@ $(document).ready(function() {
             'cursor': 'grabbing'
         }); 
         
-        // 阻止事件冒泡，防止触发桌面点击取消选中
         e.stopPropagation(); 
     });
 
@@ -46,11 +44,9 @@ $(document).ready(function() {
         let newX = e.clientX - offsetX;
         let newY = e.clientY - offsetY;
 
-        // 相对 #icon-area 的坐标
         let relativeX = newX - iconAreaOffset.left;
         let relativeY = newY - iconAreaOffset.top;
 
-        // 边界限制
         relativeX = Math.max(0, Math.min(relativeX, iconAreaWidth - iconWidth));
         relativeY = Math.max(0, Math.min(relativeY, iconAreaHeight - iconHeight));
 
@@ -80,7 +76,6 @@ $(document).ready(function() {
                     screenIcons[iconIndex].x = finalX;
                     screenIcons[iconIndex].y = finalY;
                     saveUserDesktops();
-                    console.log(`Icon ${iconId} position updated and saved.`);
                 }
             }
         }
@@ -94,13 +89,12 @@ $(document).ready(function() {
         const dataTransfer = e.originalEvent.dataTransfer;
         const appID = $(this).data('app-id');
         
-        // 将应用 ID 存储在拖动数据中
         dataTransfer.setData('text/plain', appID);
         dataTransfer.effectAllowed = "copy";
         
         isDraggingNew = true; // 标记正在拖动新图标
     });
-    
+
     // 2. 桌面区域 dragover 事件：允许放下
     $('#desktop-area').on('dragover', function(e) {
         e.preventDefault(); 
@@ -125,11 +119,11 @@ $(document).ready(function() {
             let dropX = e.clientX - iconAreaOffset.left;
             let dropY = e.clientY - iconAreaOffset.top;
             
-            // 考虑图标自身的宽度/高度，使鼠标落在图标中心附近（可选的微调）
+            // 考虑图标自身的宽度/高度，使鼠标落在图标中心附近
             dropX -= 40; 
             dropY -= 45; 
 
-            // 边界限制（重新应用，确保图标不会被拖出桌面）
+            // 边界限制
             const iconWidth = 80;
             const iconHeight = 90;
             const iconAreaWidth = $iconArea.width();
@@ -155,8 +149,6 @@ $(document).ready(function() {
             
             // 2. 重新渲染桌面以显示新图标
             renderDesktop(currentSystemId, currentScreenIndex);
-            
-            console.log(`New icon ${appID} dropped and saved.`);
         }
         
         isDraggingNew = false;

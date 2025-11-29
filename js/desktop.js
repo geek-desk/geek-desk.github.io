@@ -13,7 +13,6 @@ class DesktopManager {
         this.initContextMenu();
         this.initFolderWindow();
         
-        // 壁纸点击
         $(document).on('click', '.wallpaper-item', function() {
             const url = $(this).data('url');
             $('#desktop-area').css('background-image', `url(${url})`);
@@ -27,21 +26,17 @@ class DesktopManager {
         this.saveToMemory(this.currentOS);
         this.currentOS = osName;
 
-        // 设置默认壁纸
         const bg = CONFIG.wallpapers[osName] || 'none';
         $('#desktop-area').removeClass().addClass(`os-${osName}`).css('background-image', bg);
         
         this.updateSystemUI(osName);
-        this.renderSidebar(osName);
+        this.renderSidebar(osName); // 渲染侧边栏
         $('#desktop-stage').empty();
         
-        // 读取缓存或默认
         const cached = this.cachedLayouts[osName];
         if (cached && cached.icons) {
             this.folderData = cached.folders || {};
-            if (cached.customWallpaper) {
-                $('#desktop-area').css('background-image', cached.customWallpaper);
-            }
+            if (cached.customWallpaper) $('#desktop-area').css('background-image', cached.customWallpaper);
             this.renderIcons(cached.icons);
         } else {
             this.folderData = {};
@@ -53,35 +48,28 @@ class DesktopManager {
         }
     }
 
-    // === 修复后的侧边栏渲染 (带容错) ===
+    // === 修复后的侧边栏渲染 (使用 window.t) ===
     renderSidebar(os) {
         const container = $('#dynamic-toolbox');
         container.empty();
         
         let tools = [];
-        try {
-            tools = getToolsForOS(os);
-        } catch(e) { console.log(e); }
-
-        if(!tools || !Array.isArray(tools)) {
-            container.html('<div style="padding:15px;color:#999;">Loading tools...</div>');
-            return;
-        }
+        try { tools = getToolsForOS(os); } catch(e) { console.log(e); }
+        if(!tools || !Array.isArray(tools)) return;
 
         tools.forEach((cat, index) => {
             let itemsHtml = '';
-            // 确保 cat.items 存在
             if (cat.items && Array.isArray(cat.items)) {
                 if (cat.type === 'wallpaper') {
-                    cat.items.forEach(wp => {
-                        itemsHtml += `<div class="wallpaper-item" style="background-image:url(${wp.img})" data-url="${wp.url}"></div>`;
-                    });
-                    container.append(`<div class="category"><div class="cat-title">${t('wallpaper') || 'Wallpaper'}</div><div class="cat-content wallpapers">${itemsHtml}</div></div>`);
+                    cat.items.forEach(wp => itemsHtml += `<div class="wallpaper-item" style="background-image:url(${wp.img})" data-url="${wp.url}"></div>`);
+                    // 确保 t 函数存在
+                    const title = window.t ? window.t('wallpaper') : 'Wallpapers';
+                    container.append(`<div class="category"><div class="cat-title">${title}</div><div class="cat-content wallpapers">${itemsHtml}</div></div>`);
                 } else {
-                    cat.items.forEach(tool => {
-                        itemsHtml += `<div class="tool-icon" data-name="${tool.name}" data-icon="${tool.icon}" data-color="${tool.color}"><i class="${tool.icon}" style="color:${tool.color}"></i><span>${tool.name}</span></div>`;
-                    });
-                    container.append(`<div class="category ${index>1?'collapsed':''}"><div class="cat-title">${t(cat.title) || cat.title}</div><div class="cat-content">${itemsHtml}</div></div>`);
+                    cat.items.forEach(tool => itemsHtml += `<div class="tool-icon" data-name="${tool.name}" data-icon="${tool.icon}" data-color="${tool.color}"><i class="${tool.icon}" style="color:${tool.color}"></i><span>${tool.name}</span></div>`);
+                    // 使用 t 翻译分类标题 (如 office -> 办公)
+                    const title = window.t ? window.t(cat.title) : cat.title;
+                    container.append(`<div class="category ${index>1?'collapsed':''}"><div class="cat-title">${title}</div><div class="cat-content">${itemsHtml}</div></div>`);
                 }
             }
         });
@@ -215,11 +203,10 @@ class DesktopManager {
             icons.push({ id:el.attr('id'), name:el.data('name'), icon:el.find('i').attr('class'), color:el.data('color'), x:parseFloat(el.css('left')), y:parseFloat(el.css('top')), type:el.data('type'), parent:el.parent().attr('id') });
         });
         
-        // 关键：保留 wallaper 和 public 状态
         let isPublic = false;
         let currentBg = $('#desktop-area').css('background-image');
         
-        if (this.cachedLayouts[os]) {
+        if (this.cachedLayouts[os] && this.cachedLayouts[os].is_public) {
             isPublic = this.cachedLayouts[os].is_public;
         }
 
@@ -238,10 +225,7 @@ class DesktopManager {
         this.cachedLayouts[this.currentOS] = data;
         this.folderData = data.folders || {};
         $('#desktop-stage').empty();
-        
-        // 恢复壁纸
         if(data.customWallpaper) $('#desktop-area').css('background-image', data.customWallpaper);
-        
         if(data.icons) this.renderIcons(data.icons);
     }
     

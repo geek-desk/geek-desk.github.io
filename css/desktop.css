@@ -21,17 +21,16 @@
 /* === 舞台容器 === */
 #stage-wrapper {
     width: 100%; height: 100%; position: relative;
-    padding-top: 60px; /* 避开顶部标签 */
-    padding-bottom: 60px; /* 避开底部 Taskbar */
+    padding-top: 60px; /* 电脑版避开顶部标签 */
+    padding-bottom: 60px; 
 }
-/* Ubuntu 需要避开左侧 Dock */
 .os-ubuntu #stage-wrapper { padding-left: 70px; }
 
 #desktop-stage { width: 100%; height: 100%; position: relative; }
 
-/* === 手机外壳修复 === */
+/* === 手机外壳 === */
 .mobile-mode #stage-wrapper {
-    width: 320px; height: 680px; /* 稍微缩小以适应大部分笔记本屏幕 */
+    width: 320px; height: 680px; 
     margin: 30px auto; 
     border: 10px solid #222; border-radius: 35px;
     box-shadow: 0 0 0 2px #444, 0 20px 50px rgba(0,0,0,0.5);
@@ -43,27 +42,41 @@
 }
 .mobile-mode .mobile-screen {
     min-width: 100%; height: 100%; scroll-snap-align: start;
-    position: relative; padding-top: 40px;
+    position: relative; 
+    /* 修正：增加顶部内边距，避开状态栏 */
+    padding-top: 60px; 
 }
 
-/* === 图标 === */
+/* === 图标样式修正 === */
 .app-icon {
     width: 70px; height: 90px; position: absolute;
     display: flex; flex-direction: column; align-items: center;
     cursor: pointer; padding: 5px; border-radius: 6px;
-    color: white !important; text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    /* 修正：去掉 color:white !important，允许图标使用自己的颜色 */
+    transition: transform 0.1s;
 }
 .app-icon:hover { background: rgba(255,255,255,0.15); }
-.app-icon i { font-size: 40px; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
-.app-icon span { font-size: 12px; line-height: 1.2; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* 文件夹图标样式 */
-.app-icon[data-type="folder"] i { color: #f1c40f; }
+.app-icon i { 
+    font-size: 40px; margin-bottom: 5px; 
+    /* 图标带一点阴影，增强立体感，但不强制白色 */
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+}
+
+.app-icon span { 
+    font-size: 12px; line-height: 1.2; text-align: center; width: 100%; 
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+    /* 修正：文字强制白色带阴影，保证在任何壁纸上可见 */
+    color: white;
+    text-shadow: 0 1px 2px black;
+}
+
+/* 文件夹图标颜色覆盖 */
+.app-icon[data-type="folder"] i { color: #f1c40f !important; }
 
 /* === 系统 UI === */
 .sys-ui { position: absolute; z-index: 90; }
 
-/* Windows Taskbar */
 .taskbar-win11 {
     bottom: 0; left: 0; right: 0; height: 45px;
     background: rgba(243, 243, 243, 0.9); backdrop-filter: blur(10px);
@@ -72,7 +85,6 @@
 .taskbar-win11 .start-btn { font-size: 20px; color: #0078d7; margin-right: 15px; }
 .taskbar-win11 .task-icons { flex: 1; display: flex; justify-content: center; gap: 15px; font-size: 18px; color: #444; }
 
-/* macOS Dock */
 .dock-macos { bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; }
 .dock-macos .dock-container {
     pointer-events: auto; background: rgba(255,255,255,0.25); backdrop-filter: blur(15px);
@@ -84,7 +96,6 @@
 }
 .dock-macos .dock-item:hover { transform: scale(1.1) translateY(-5px); }
 
-/* Ubuntu Dock (左侧) */
 .dock-ubuntu {
     top: 50px; bottom: 0; left: 0; width: 60px;
     background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
@@ -98,7 +109,6 @@
 }
 .dock-ubuntu .dock-spacer { flex: 1; }
 
-/* Mobile Status Bar */
 .status-bar-mobile {
     top: 0; left: 0; right: 0; height: 30px; padding: 0 20px;
     display: flex; justify-content: space-between; align-items: center;
@@ -123,14 +133,18 @@
 #folder-content {
     flex: 1; padding: 15px; position: relative; background: #fff;
     border-radius: 0 0 8px 8px;
+    /* 文件夹内用 flex wrap 自动排列，不绝对定位 */
+    display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start;
 }
+/* 文件夹内的图标样式 */
 #folder-content .app-icon {
-    /* 文件夹内的图标样式 */
-    color: #333 !important; text-shadow: none;
+    position: relative; /* 覆盖绝对定位 */
+    left: auto !important; top: auto !important;
+    width: 60px; height: 80px;
+    color: #333;
 }
-#folder-content .app-icon i { filter: none; color: #555; }
+#folder-content .app-icon span { color: #333; text-shadow: none; }
 
-/* 右键菜单 */
 #context-menu {
     position: absolute; width: 140px; background: white;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 4px; padding: 5px 0; z-index: 999;

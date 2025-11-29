@@ -1,117 +1,100 @@
 // js/core.js
-// 核心逻辑：状态管理、本地存储、系统切换
+// 包含初始化、系统切换、桌面渲染、侧边栏渲染等核心逻辑
 
-const STORAGE_KEY = 'DesktopShareSimData'; // 仅在此处声明 STORAGE_KEY
-let userDesktops = {};
-let currentSystemId = 'windows'; 
-let currentScreenIndex = 0; 
+// 全局变量 (假设它们已在 core.js 外部定义或在其他地方正确加载)
+// let currentSystemId = 'windows';
+// let currentScreenIndex = 0;
+// let userDesktops = {}; // Must be initialized or loaded
 
+// ... (loadUserDesktops, saveUserDesktops, switchSystem, renderSystemTabs, renderDesktop, setupEventListeners 等其他函数保持不变) ...
 
-// --- Local Storage Functions (本地存储功能) ---
+/**
+ * 渲染任务栏/Dock图标。
+ * 任务栏通常只显示系统级别的核心应用或已打开的应用。
+ */
+function renderDock(systemId) {
+    const $dock = $('#system-dock');
+    $dock.empty();
 
-/** 从 localStorage 加载所有桌面配置或使用默认值 */
-const loadUserDesktops = () => {
-    // 这里的 SYSTEMS, APP_LIST, WALLPAPERS 变量现在可以安全访问了，因为 data.js 已经加载
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    // ... (loadUserDesktops 函数其余部分保持不变) ...
-    if (savedData) {
-        userDesktops = JSON.parse(savedData);
-    } else {
-        Object.keys(SYSTEMS).forEach(sysId => {
-            const defaultApp = APP_LIST.find(app => app.sys_category.includes(sysId) && app.func_category === 'system');
-            
-            const screenConfigs = [];
-            for (let i = 0; i < SYSTEMS[sysId].max_screens; i++) {
-                 const icons = (i === 0 && defaultApp) ? [{ 
-                    id: defaultApp.id, 
-                    name: defaultApp.name, 
-                    type: 'system', 
-                    x: 20, 
-                    y: 20,
-                    is_folder: false
-                }] : [];
-                screenConfigs.push(icons);
-            }
+    // 筛选出适用于当前系统的核心应用 (例如，标记为 func_category: 'system' 的应用)
+    const dockApps = APP_LIST.filter(app => 
+        app.sys_category.includes(systemId) && app.func_category === 'system'
+    );
 
-            userDesktops[sysId] = {
-                is_public: false,
-                wallpaper: SYSTEMS[sysId].default_wallpaper,
-                screens: screenConfigs,
-                folder_config: {}, 
-                metadata: { likes: 0, favorites: 0 }
-            };
-        });
-        saveUserDesktops();
-    }
-    console.log('Desktops loaded:', userDesktops);
-};
+    // 渲染 Dock 图标 (这里使用简单的渲染逻辑)
+    dockApps.forEach(app => {
+        const $icon = $(`
+            <div class="dock-icon" data-id="${app.id}">
+                <img src="${app.icon_url}" alt="${app.name}">
+                <span>${app.name}</span>
+            </div>
+        `);
+        // 注意：Dock 图标可能需要不同的 CSS 样式 (.dock-icon)
+        $dock.append($icon);
+    });
 
-/** 将当前状态保存到 localStorage */
-const saveUserDesktops = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userDesktops));
-};
+    // 额外的：Dock 还需要显示 Start/Home 按钮等，这里仅处理应用图标
+}
 
-// ... (renderSystemTabs, switchSystem, switchScreen 函数保持不变) ...
-const renderSystemTabs = () => {
-    const $tabsContainer = $('#system-tabs');
-    $tabsContainer.empty();
+/**
+ * 重写：渲染侧边栏工具箱，使用可折叠的垂直分类。
+ * 侧边栏图标必须与当前系统匹配 (sys_category)。
+ */
+function renderSidebar(systemId) {
+    const $sidebar = $('#toolbox-sidebar');
     
-    Object.keys(SYSTEMS).forEach(sysId => {
-        const sys = SYSTEMS[sysId];
-        const $tab = $(`<div class="system-tab" data-system-id="${sysId}">${sys.name}</div>`);
-        
-        if (sysId === currentSystemId) {
-            $tab.addClass('active');
+    // 清空旧的分类和图标列表
+    // 由于我们改变了结构，直接清空整个容器，只保留必要的子容器
+    $sidebar.empty(); 
+
+    // 遍历 CATEGORIES 对象，创建可折叠部分
+    for (const catId in CATEGORIES) {
+        if (!CATEGORIES.hasOwnProperty(catId)) continue;
+        const catName = CATEGORIES[catId];
+
+        // 1. 过滤出适用于当前系统和当前分类的应用
+        const appsInCategory = APP_LIST.filter(app => 
+            app.sys_category.includes(systemId) && app.func_category === catId
+        );
+
+        if (appsInCategory.length === 0) {
+            // 如果该系统在该分类下没有应用，则跳过不渲染
+            continue;
         }
+
+        // 2. 创建分类区块
+        const $section = $(`<div class="category-section"></div>`);
         
-        $tab.on('click', () => switchSystem(sysId));
-        $tabsContainer.append($tab);
-    });
-};
+        // 3. 创建分类头部 (可点击折叠)
+        const $header = $(`
+            <h4 class="category-header" data-category-id="${catId}">
+                ${catName}
+            </h4>
+        `);
 
-const switchSystem = (newSystemId) => {
-    if (newSystemId === currentSystemId) {
-         renderDesktop(currentSystemId, currentScreenIndex);
-         renderSidebar(currentSystemId);
-         return;
+        // 4. 创建图标内容区域
+        const $content = $(`
+            <div class="icon-list-content" data-category-id="${catId}"></div>
+        `);
+
+        // 5. 渲染图标到内容区域
+        appsInCategory.forEach(app => {
+            const $icon = $(`
+                <div class="sidebar-icon" data-app-id="${app.id}" draggable="true">
+                    <img src="${app.icon_url}" alt="${app.name}">
+                    <span>${app.name}</span>
+                </div>
+            `);
+            $content.append($icon);
+        });
+
+        $section.append($header).append($content);
+        $sidebar.append($section);
     }
     
-    currentSystemId = newSystemId;
-    currentScreenIndex = 0; 
-    
-    $(`.system-tab.active`).removeClass('active');
-    $(`.system-tab[data-system-id="${newSystemId}"]`).addClass('active');
-    
-    const isMobile = ['android', 'ios'].includes(newSystemId);
-    $('#desktop-area').toggleClass('mobile-mode', isMobile);
-    
-    renderDesktop(currentSystemId, currentScreenIndex);
-    renderSidebar(currentSystemId);
-};
-
-const switchScreen = (index) => {
-    const sys = SYSTEMS[currentSystemId];
-    if (index >= 0 && index < sys.max_screens) {
-        currentScreenIndex = index;
-        $('.screen-dot.active').removeClass('active');
-        $(`.screen-dot[data-index="${index}"]`).addClass('active');
-        renderDesktop(currentSystemId, currentScreenIndex);
-    }
-};
-
-$(document).ready(function() {
-    // 确保 DOM 准备就绪后，才开始执行初始化逻辑
-    loadUserDesktops();
-    renderSystemTabs();
-    
-    switchSystem(currentSystemId);
-
-    $('#world-btn').on('click', () => {
-        alert("World view is under construction.");
+    // 6. 绑定折叠/展开事件
+    $('.category-header').off('click').on('click', function() {
+        $(this).toggleClass('collapsed');
+        $(this).next('.icon-list-content').slideToggle(200);
     });
-    
-    $('#desktop-area').on('contextmenu', function(e) {
-        e.preventDefault();
-        console.log("Custom Context Menu Triggered.");
-    });
-});
+}

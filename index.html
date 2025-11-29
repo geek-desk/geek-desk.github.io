@@ -26,32 +26,39 @@
             <!-- 舞台 -->
             <div id="stage-wrapper">
                 <div id="desktop-stage">
-                    <!-- 图标将由 JS 动态生成 -->
+                    <!-- 图标由 JS 动态生成 -->
                 </div>
             </div>
 
-            <!-- 系统特色 UI -->
-            <!-- Win11 任务栏 -->
+            <!-- Windows 11 任务栏 (带颜色的图标) -->
             <div class="sys-ui taskbar-win11 hidden">
                 <div class="start-btn"><i class="fa-brands fa-windows"></i></div>
-                <div class="task-icons"><i class="fa-brands fa-edge"></i><i class="fa-solid fa-folder"></i></div>
+                <div class="task-icons">
+                    <!-- 加上了 style="color:..." -->
+                    <i class="fa-brands fa-edge" style="color:#74b9ff"></i>
+                    <i class="fa-solid fa-folder" style="color:#f1c40f"></i>
+                    <i class="fa-solid fa-store" style="color:#0984e3"></i>
+                    <i class="fa-brands fa-spotify" style="color:#2ecc71"></i>
+                </div>
                 <div class="tray-area"><span class="clock">10:25</span></div>
             </div>
 
-            <!-- macOS Dock -->
+            <!-- macOS Dock (带颜色的图标) -->
             <div class="sys-ui dock-macos hidden">
                 <div class="dock-container">
-                    <div class="dock-item"><i class="fa-brands fa-safari"></i></div>
-                    <div class="dock-item"><i class="fa-solid fa-music"></i></div>
-                    <div class="dock-item"><i class="fa-solid fa-gear"></i></div>
+                    <div class="dock-item"><i class="fa-brands fa-safari" style="color:#0984e3"></i></div>
+                    <div class="dock-item"><i class="fa-solid fa-music" style="color:#ff7675"></i></div>
+                    <div class="dock-item"><i class="fa-solid fa-message" style="color:#2ecc71"></i></div>
+                    <div class="dock-item"><i class="fa-solid fa-image" style="color:#a29bfe"></i></div>
+                    <div class="dock-item"><i class="fa-solid fa-gear" style="color:#636e72"></i></div>
                 </div>
             </div>
 
-            <!-- Ubuntu Dock (左侧) -->
+            <!-- Ubuntu Dock (带颜色的图标) -->
             <div class="sys-ui dock-ubuntu hidden">
                 <div class="dock-item"><i class="fa-brands fa-firefox-browser" style="color:#e67e22"></i></div>
                 <div class="dock-item"><i class="fa-solid fa-folder" style="color:#f39c12"></i></div>
-                <div class="dock-item"><i class="fa-solid fa-terminal" style="color:#333"></i></div>
+                <div class="dock-item"><i class="fa-solid fa-terminal" style="color:#ddd"></i></div>
                 <div class="dock-item"><i class="fa-brands fa-amazon" style="color:#fff"></i></div>
                 <div class="dock-spacer"></div>
                 <div class="dock-item"><i class="fa-solid fa-grid-round"></i></div>
@@ -67,12 +74,10 @@
             <!-- 文件夹打开时的窗口 -->
             <div id="folder-window" class="hidden">
                 <div class="folder-header">
-                    <span id="folder-title">新建文件夹</span>
+                    <span id="folder-title">文件夹</span>
                     <button id="btn-close-folder">X</button>
                 </div>
-                <div id="folder-content">
-                    <!-- 文件夹内的图标 -->
-                </div>
+                <div id="folder-content"></div>
             </div>
 
             <!-- 右键菜单 -->
@@ -102,29 +107,13 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 这里的工具栏现在是空的，由 JS 填充 -->
             <div class="toolbox" id="dynamic-toolbox"></div>
         </div>
     </div>
 
-    <!-- 弹窗保持不变... 略 (直接复制之前的即可，不影响) -->
-    <div id="modal-overlay" class="overlay hidden">
-        <div class="modal-box">
-            <h3>登录</h3>
-            <input type="email" id="email" placeholder="邮箱" style="width:100%;padding:10px;margin:10px 0;">
-            <input type="password" id="password" placeholder="密码" style="width:100%;padding:10px;margin:10px 0;">
-            <div class="form-actions"><button id="btn-do-login" class="btn-primary">登录</button><button id="btn-do-signup" class="btn-secondary">注册</button></div>
-            <button id="btn-close-modal" class="btn-close">X</button>
-        </div>
-    </div>
-    
-    <div id="world-overlay" class="overlay hidden">
-        <div class="world-modal">
-            <div class="world-header"><h2>🌏 世界</h2><button id="btn-close-world" class="btn-danger">关闭</button></div>
-            <div id="world-grid"></div>
-        </div>
-    </div>
+    <!-- 弹窗通用 (不变，为节省篇幅不重复粘贴，保持之前的即可) -->
+    <div id="modal-overlay" class="overlay hidden"><div class="modal-box"><h3>登录</h3><input type="email" id="email" placeholder="邮箱" style="width:100%;padding:10px;margin:10px 0;"><input type="password" id="password" placeholder="密码" style="width:100%;padding:10px;margin:10px 0;"><div class="form-actions"><button id="btn-do-login" class="btn-primary">登录</button><button id="btn-do-signup" class="btn-secondary">注册</button></div><button id="btn-close-modal" class="btn-close">X</button></div></div>
+    <div id="world-overlay" class="overlay hidden"><div class="world-modal"><div class="world-header"><h2>🌏 世界</h2><button id="btn-close-world" class="btn-danger">关闭</button></div><div id="world-grid"></div></div></div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>

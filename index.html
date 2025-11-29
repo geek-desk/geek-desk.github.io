@@ -1,23 +1,152 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>桌面分享游戏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>桌面分享世界</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <!-- 引入 FontAwesome 用于图标占位 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="css/desktop.css">
 </head>
 <body>
 
-<div id="toolbar"></div>
+    <!-- 整个应用容器 -->
+    <div id="app-container">
+        
+        <!-- 左侧：桌面区域 -->
+        <div id="desktop-area" class="os-windows">
+            <!-- 顶部系统切换标签 -->
+            <div id="os-tabs">
+                <button data-os="windows" class="active">Windows 11</button>
+                <button data-os="macos">macOS</button>
+                <button data-os="ubuntu">Ubuntu</button>
+                <button data-os="android">Android</button>
+                <button data-os="ios">iOS</button>
+            </div>
 
-<div id="desktop-area">
-    <!-- 用户桌面区域 -->
-</div>
+            <!-- 桌面舞台 (手机模式下会有分屏容器) -->
+            <div id="desktop-stage">
+                <!-- 动态生成的图标和窗口将放在这里 -->
+                <div class="app-icon default-icon" data-type="system" id="my-computer">
+                    <i class="fa-solid fa-desktop"></i>
+                    <span>我的电脑</span>
+                </div>
+            </div>
 
-<script src="js/supabase.js"></script>
-<script src="js/desktop.js"></script>
-<script src="js/toolbar.js"></script>
+            <!-- 右键菜单 -->
+            <ul id="context-menu" class="hidden">
+                <li id="ctx-new-folder">新建文件夹</li>
+                <li id="ctx-rename">重命名</li>
+                <li id="ctx-delete">删除</li>
+            </ul>
+        </div>
+
+        <!-- 右侧：工具栏 -->
+        <div id="sidebar">
+            <!-- 广告位 -->
+            <div class="ad-slot">Google Adsense Area</div>
+
+            <!-- 世界链接 -->
+            <div class="world-link-btn" id="btn-open-world">
+                <i class="fa-solid fa-earth-asia"></i> 进入【世界】
+            </div>
+
+            <!-- 用户信息区 -->
+            <div id="user-panel">
+                <div id="guest-view">
+                    <p>游客模式</p>
+                    <button id="btn-login-modal">登录 / 注册</button>
+                </div>
+                <div id="logged-view" style="display:none;">
+                    <p id="user-nickname">未命名用户</p>
+                    <div class="stats">
+                        <span>❤️ <span id="user-likes">0</span></span>
+                        <span>⭐ <span id="user-colls">0</span></span>
+                    </div>
+                    <button id="btn-save">保存桌面</button>
+                    <button id="btn-logout">退出</button>
+                </div>
+            </div>
+
+            <!-- 工具箱 (分类) -->
+            <div class="toolbox">
+                <h3>组件箱</h3>
+                
+                <div class="category">
+                    <div class="cat-title">游戏</div>
+                    <div class="cat-content">
+                        <div class="tool-icon" data-name="王者荣耀" data-img="wangzhe"><i class="fa-solid fa-gamepad"></i> 王者荣耀</div>
+                        <div class="tool-icon" data-name="CS:GO" data-img="csgo"><i class="fa-solid fa-crosshairs"></i> CS:GO</div>
+                    </div>
+                </div>
+
+                <div class="category">
+                    <div class="cat-title">浏览器</div>
+                    <div class="cat-content">
+                        <div class="tool-icon" data-name="Chrome" data-img="chrome"><i class="fa-brands fa-chrome"></i> 谷歌</div>
+                        <div class="tool-icon" data-name="Baidu" data-img="baidu"><i class="fa-solid fa-paw"></i> 百度</div>
+                    </div>
+                </div>
+
+                <div class="category">
+                    <div class="cat-title">办公</div>
+                    <div class="cat-content">
+                        <div class="tool-icon" data-name="Word" data-img="word"><i class="fa-solid fa-file-word"></i> Word</div>
+                        <div class="tool-icon" data-name="Excel" data-img="excel"><i class="fa-solid fa-file-excel"></i> Excel</div>
+                    </div>
+                </div>
+                 
+                <!-- 壁纸设置 -->
+                <div class="category">
+                    <div class="cat-title">壁纸设置</div>
+                    <div class="cat-content wallpaper-list">
+                        <!-- JS 填充壁纸缩略图 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录弹窗 (隐藏) -->
+    <div id="modal-overlay" class="hidden">
+        <div class="modal">
+            <h2>欢迎来到桌面世界</h2>
+            <input type="email" id="email" placeholder="邮箱">
+            <input type="password" id="password" placeholder="密码">
+            <button id="btn-do-login">登录</button>
+            <button id="btn-do-signup">注册</button>
+            <button id="btn-close-modal">关闭</button>
+        </div>
+    </div>
+    
+    <!-- 世界弹窗 (隐藏) -->
+    <div id="world-overlay" class="hidden">
+        <div class="world-modal">
+            <div class="world-header">
+                <h2>世界广场</h2>
+                <button id="btn-close-world">X</button>
+            </div>
+            <div class="world-tabs">
+                <button class="active">最新</button>
+                <button>热门</button>
+            </div>
+            <div id="world-grid">
+                <!-- 动态加载其他玩家的桌面 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JS 引用 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/desktop.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

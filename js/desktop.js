@@ -1,4 +1,5 @@
 // js/desktop.js
+// 桌面渲染、图标生成和侧边栏逻辑
 
 /** 渲染桌面图标 */
 const renderDesktop = (sysId, screenIndex) => {
@@ -15,7 +16,11 @@ const renderDesktop = (sysId, screenIndex) => {
     
     if (screenIcons) {
         screenIcons.forEach(iconData => {
-            const appInfo = APP_LIST.find(app => app.id === iconData.id) || { name: 'Unknown App', icon_url: '' };
+            // 从 APP_LIST 中查找应用信息，如果找不到则使用默认占位符
+            const appInfo = APP_LIST.find(app => app.id === iconData.id) || { 
+                name: 'Unknown App', 
+                icon_url: 'https://cdn.jsdelivr.net/npm/boxicons@2.1.4/svg/solid/bxs-error.svg' 
+            };
             
             const $icon = $(`
                 <div class="desktop-icon" 
@@ -40,7 +45,19 @@ const renderDesktop = (sysId, screenIndex) => {
     // 3. 渲染分屏指示器 (仅手机系统)
     renderScreenIndicator(sysId);
     
-    // 4. (TODO: 绑定右键菜单和图标选择事件)
+    // 4. 绑定图标选中事件
+    $iconArea.on('click', '.desktop-icon', function(event) {
+        event.stopPropagation(); 
+        $('.desktop-icon').removeClass('selected');
+        $(this).addClass('selected');
+    });
+
+    // 点击桌面背景时，取消所有选中状态
+    $('#desktop-background, #icon-area').on('click', function(event) {
+         if (!$(event.target).closest('.desktop-icon').length) {
+            $('.desktop-icon').removeClass('selected');
+        }
+    });
 };
 
 /** 渲染分屏指示器 */
@@ -68,29 +85,34 @@ const renderSidebar = (sysId) => {
     const $categoryContainer = $('#sidebar-categories');
     $categoryContainer.empty();
     
-    let activeCategory = 'system'; // 默认过滤器为系统应用
+    // 默认过滤器设置为第一个系统适用的分类 (这里默认用 'browser' 或 'system' 都可以)
+    let initialCategory = 'system'; 
     
     // 1. 渲染分类按钮
     Object.keys(CATEGORIES).forEach(catId => {
-        const $btn = $(`<button data-cat-id="${catId}">${CATEGORIES[catId]}</button>`);
+        // 只有当前系统至少有一个应用属于这个分类时才显示
+        const hasApps = APP_LIST.some(app => app.sys_category.includes(sysId) && app.func_category === catId);
         
-        if (catId === activeCategory) {
-            $btn.addClass('active');
+        if (hasApps) {
+            const $btn = $(`<button data-cat-id="${catId}">${CATEGORIES[catId]}</button>`);
+            
+            if (catId === initialCategory) {
+                $btn.addClass('active');
+            }
+            
+            $btn.on('click', function() {
+                // 重新渲染图标列表
+                renderSidebarIcons(sysId, catId); 
+                $('#sidebar-categories button').removeClass('active');
+                $(this).addClass('active');
+            });
+            
+            $categoryContainer.append($btn);
         }
-        
-        $btn.on('click', function() {
-            activeCategory = catId;
-            // 重新渲染图标列表
-            renderSidebarIcons(sysId, activeCategory); 
-            $('#sidebar-categories button').removeClass('active');
-            $(this).addClass('active');
-        });
-        
-        $categoryContainer.append($btn);
     });
     
     // 2. 渲染初始图标
-    renderSidebarIcons(sysId, activeCategory);
+    renderSidebarIcons(sysId, initialCategory);
 };
 
 /** 过滤并显示侧边栏图标 */
@@ -99,19 +121,18 @@ const renderSidebarIcons = (sysId, catId) => {
     $iconList.empty();
 
     const filteredApps = APP_LIST.filter(app => 
-        // 过滤条件: 适用系统 AND 功能分类
         app.sys_category.includes(sysId) && app.func_category === catId
     );
 
     filteredApps.forEach(app => {
         const $icon = $(`
-            <div class="sidebar-icon" data-app-id="${app.id}">
+            <div class="sidebar-icon" data-app-id="${app.id}" draggable="true">
                 <img src="${app.icon_url}" alt="${app.name}">
                 <span>${app.name}</span>
             </div>
         `);
         
-        // TODO: 绑定从侧边栏拖动到桌面的事件
+        // TODO: 绑定拖动事件的初始化逻辑
         $iconList.append($icon);
     });
 };

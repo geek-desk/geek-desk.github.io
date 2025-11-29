@@ -2,92 +2,93 @@
 class DesktopManager {
     constructor() {
         this.currentOS = 'windows';
-        
-        // 内存缓存：用于在没保存到数据库前，在不同系统间切换时不丢失图标
-        this.cachedLayouts = {
-            windows: [],
-            macos: [],
-            ubuntu: [],
-            android: [],
-            ios: []
-        };
-        
+        this.cachedLayouts = { windows: [], macos: [], ubuntu: [], android: [], ios: [] };
         this.init();
     }
 
     init() {
         this.initDragDrop();
         this.initContextMenu();
-        this.initDoubleClick(); // 新增双击功能
+        // 初始显示 Windows UI
+        this.updateSystemUI('windows');
     }
 
-    // 切换操作系统
     switchOS(osName) {
-        // 1. 保存当前系统的状态到内存缓存
+        // 保存旧的
         this.saveToMemory(this.currentOS);
 
-        // 2. 更新当前系统标记
         this.currentOS = osName;
         console.log("切换系统至:", osName);
 
-        // 3. UI 更新
+        // 更新壁纸
         $('#desktop-area').css('background-image', CONFIG.wallpapers[osName] || 'none');
         
-        // 4. 清空舞台
+        // 更新 UI 显隐 (Taskbar, Dock, Phone Frame)
+        this.updateSystemUI(osName);
+
+        // 清空并重新渲染图标
         $('#desktop-stage').empty();
-
-        // 5. 渲染新环境
-        if (['android', 'ios'].includes(osName)) {
-            $('body').addClass('mobile-mode');
-            this.renderMobileScreens();
-        } else {
-            $('body').removeClass('mobile-mode');
-        }
-
-        // 6. 从内存恢复图标 (如果内存有数据，优先用内存的；内存空则说明是第一次加载)
-        // 注意：loadCloudDesktop 会覆盖这个，所以逻辑是：切换时先显示内存的，随后异步请求云端如果没有改动则保持
+        
+        // 内存恢复逻辑
         const cachedIcons = this.cachedLayouts[osName];
         if (cachedIcons && cachedIcons.length > 0) {
             this.renderIconsFromData(cachedIcons);
         } else {
-            // 如果内存是空的，且是电脑系统，加个默认图标
+            // 默认图标
             if (!['android', 'ios'].includes(osName)) {
                 this.addIcon('my-computer', '我的电脑', 'fa-desktop', 20, 20, '#desktop-stage');
             }
-            // 尝试触发云端加载 (app.js 或 auth.js 会调用)
             if (window.loadCloudDesktop) window.loadCloudDesktop();
         }
     }
 
-    // 将当前屏幕上的图标保存到 cachedLayouts
-    saveToMemory(os) {
-        const layout = this.exportLayout();
-        this.cachedLayouts[os] = layout.icons;
+    // 控制系统拟真 UI 的显示与隐藏
+    updateSystemUI(os) {
+        // 1. 隐藏所有特定 UI
+        $('.sys-ui').addClass('hidden');
+        $('body').removeClass('mobile-mode');
+
+        // 2. 根据系统显示
+        if (os === 'windows') {
+            $('.taskbar-win11').removeClass('hidden');
+        } 
+        else if (os === 'macos') {
+            $('.dock-macos').removeClass('hidden');
+        }
+        else if (os === 'android' || os === 'ios') {
+            $('body').addClass('mobile-mode');
+            $('.status-bar-mobile').removeClass('hidden');
+            this.renderMobileScreens();
+        }
     }
 
-    // 渲染手机的3个分屏
     renderMobileScreens() {
+        // 渲染 3 个手机屏
         for(let i=1; i<=3; i++) {
-            const screenHtml = `<div class="mobile-screen" id="screen-${i}" data-index="${i}"></div>`;
-            $('#desktop-stage').append(screenHtml);
+            $('#desktop-stage').append(`<div class="mobile-screen" id="screen-${i}"></div>`);
             this.makeDroppable(`#screen-${i}`);
         }
     }
 
-    // 初始化拖拽
+    // === 解决问题2：拖动不流畅 ===
     initDragDrop() {
-        // 工具栏图标源
+        // 工具栏图标拖出
         $('.tool-icon').draggable({
+            // 使用 clone 但简化 DOM，减少重绘负担
             helper: function() {
-                // 拖拽时显示一个克隆的图标，样式简化
-                const clone = $(this).clone();
-                clone.css({ width: '60px', height: '60px', opacity: 0.8, zIndex: 1000 });
-                return clone;
+                const iconClass = $(this).data('icon');
+                const name = $(this).data('name');
+                return $(`
+                    <div style="width:60px; height:60px; background:rgba(255,255,255,0.8); border-radius:10px; display:flex; justify-content:center; align-items:center; z-index:9999; box-shadow:0 5px 15px rgba(0,0,0,0.2);">
+                        <i class="fa-solid ${iconClass}" style="font-size:30px; color:#333;"></i>
+                    </div>
+                `);
             },
             appendTo: 'body',
-            zIndex: 1000,
-            cursorAt: { top: 30, left: 30 },
-            revert: 'invalid'
+            cursor: 'grabbing',
+            cursorAt: { top: 30, left: 30 }, // 鼠标位于图标中心
+            revert: 'invalid', // 如果没放对地方，飞回去
+            zIndex: 9999
         });
 
         this.makeDroppable('#desktop-stage');
@@ -97,123 +98,95 @@ class DesktopManager {
         const self = this;
         $(selector).droppable({
             accept: '.tool-icon, .app-icon',
+            tolerance: 'pointer', // 鼠标指针对准了就算放进去，更灵敏
             drop: function(event, ui) {
-                // 计算相对坐标
                 const containerOffset = $(this).offset();
-                // 考虑滚动条（手机分屏可能有滚动）
                 const scrollLeft = $(this).scrollLeft() || 0;
                 
                 let left = event.pageX - containerOffset.left + scrollLeft;
                 let top = event.pageY - containerOffset.top;
 
-                // 边界保护
-                if (left < 0) left = 0;
-                if (top < 0) top = 0;
+                // 边界修正
+                if(left < 0) left = 0; 
+                if(top < 0) top = 0;
 
-                // 新图标 vs 移动现有图标
+                // 如果是新拖进来的
                 if (ui.draggable.hasClass('tool-icon')) {
                     const name = ui.draggable.data('name');
-                    const iconClass = ui.draggable.data('icon');
+                    // 注意：这里读取的是 fontawesome class，如 "fa-brands fa-chrome"
+                    const fullClass = ui.draggable.find('i').attr('class'); 
+                    // 我们只取 fa- 之后的，或者直接存完整的
+                    
                     const newId = 'icon-' + Date.now();
-                    self.addIcon(newId, name, iconClass, left, top, '#' + $(this).attr('id'));
+                    self.addIcon(newId, name, fullClass, left, top, '#' + $(this).attr('id'));
                 } else {
-                    const draggedItem = ui.draggable;
-                    // 如果跨容器拖拽（比如手机屏幕1拖到屏幕2），需要 appendTo
-                    draggedItem.appendTo($(this));
-                    draggedItem.css({ left: left, top: top });
+                    // 现有图标移动
+                    ui.draggable.appendTo($(this)).css({ left: left, top: top });
                 }
             }
         });
     }
 
-    addIcon(id, name, iconClass, x, y, containerSelector) {
-        if(!iconClass) iconClass = 'fa-cube';
-        
-        // 修正：确保 y 坐标不小于 0 (因为 desktop-stage 现在有 padding-top， CSS left/top 是相对于 padding box 的左上角)
-        // jQuery UI draggable 使用 absolute，相对于 positioned parent。
-        // 父级 padding-top 可能会影响视觉。
-        // 我们直接 append，css top 设置为相对数值。
-        
+    addIcon(id, name, iconClass, x, y, container) {
+        // 如果 iconClass 没传，给默认
+        if(!iconClass) iconClass = 'fa-solid fa-cube';
+
+        // 生成图标 HTML
         const html = `
             <div class="app-icon" id="${id}" style="left:${x}px; top:${y}px" data-name="${name}">
-                <i class="fa-solid ${iconClass}"></i>
+                <i class="${iconClass}"></i>
                 <span>${name}</span>
             </div>
         `;
-        $(containerSelector).append(html);
+        $(container).append(html);
 
+        // 让新图标可拖动
         $(`#${id}`).draggable({
-            containment: "parent", 
-            grid: [10, 10],
-            scroll: false // 防止拖拽触发滚动条乱跳
+            containment: "parent",
+            grid: [5, 5], // 稍微细腻一点的网格
+            scroll: false
         });
-        
-        // 阻止事件冒泡防止触发背景右键
+
         $(`#${id}`).on('contextmenu', (e) => e.stopPropagation());
     }
 
-    // 双击打开应用 (增加游戏感)
-    initDoubleClick() {
-        $(document).on('dblclick', '.app-icon', function() {
-            const name = $(this).data('name');
-            alert(`正在启动 【${name}】...\n(这是一个模拟功能)`);
-        });
-        // 手机端双击模拟 (jQuery mobile event needed usually, but standard dblclick works on some)
-    }
-
-    initContextMenu() {
-        $(document).on('contextmenu', '#desktop-area', function(e) {
-            if($(e.target).closest('.app-icon').length) return; // 如果点在图标上忽略
-            e.preventDefault();
-            $('#context-menu').css({ top: e.pageY, left: e.pageX }).removeClass('hidden');
-        });
-        
-        $(document).on('click', () => $('#context-menu').addClass('hidden'));
-        
-        $('#ctx-refresh').click(() => {
-            $('#desktop-stage').fadeOut(100).fadeIn(100);
-        });
-        
-        $('#ctx-delete').click(() => {
-             // 简单的删除逻辑：删除最后添加的一个，或者做一个选中状态
-             alert("请尝试将图标拖出屏幕外来删除 (开发中)");
-        });
+    saveToMemory(os) {
+        this.cachedLayouts[os] = this.exportLayout().icons;
     }
 
     exportLayout() {
         const icons = [];
         $('.app-icon').each(function() {
             const el = $(this);
-            const parentId = el.parent().attr('id');
             icons.push({
                 id: el.attr('id'),
                 name: el.data('name'),
-                iconClass: el.find('i').attr('class').replace('fa-solid ', ''), 
+                iconClass: el.find('i').attr('class'),
                 left: parseFloat(el.css('left')),
                 top: parseFloat(el.css('top')),
-                parent: parentId
+                parent: el.parent().attr('id')
             });
         });
         return { icons: icons };
     }
 
-    // 供 loadCloudDesktop 或 switchOS 调用
-    loadLayout(data) {
-        if (!data || !data.icons) return;
-        // 更新内存缓存
-        // 注意：这里我们假设 loadLayout 是加载当前 OS 的数据
-        this.cachedLayouts[this.currentOS] = data.icons;
-        this.renderIconsFromData(data.icons);
-    }
-
     renderIconsFromData(icons) {
-        // 先清空
         $('.app-icon').remove();
-        
         icons.forEach(item => {
             let container = '#' + item.parent;
             if ($(container).length === 0) container = '#desktop-stage';
             this.addIcon(item.id, item.name, item.iconClass, item.left, item.top, container);
         });
+    }
+    
+    initContextMenu() {
+        $(document).on('contextmenu', '#desktop-area', (e) => {
+            if($(e.target).closest('.app-icon').length) return;
+            e.preventDefault();
+            $('#context-menu').css({top:e.pageY, left:e.pageX}).removeClass('hidden');
+        });
+        $(document).on('click', ()=> $('#context-menu').addClass('hidden'));
+        $('#ctx-refresh').click(()=> $('#desktop-stage').fadeOut(100).fadeIn(100));
+        $('#ctx-delete').click(()=> alert('删除功能需要配合选中状态开发'));
     }
 }

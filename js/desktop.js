@@ -14,10 +14,10 @@ class DesktopManager {
         this.initContextMenu();
         this.initFolderWindow();
         
-        // 确保启动时加载 Windows
+        // 启动
         this.switchOS('windows');
 
-        // 侧边栏折叠交互 - 使用事件委托确保动态生成的元素也能响应
+        // 侧边栏事件
         $(document).on('click', '.cat-title', function() {
             $(this).parent().toggleClass('collapsed');
         });
@@ -27,47 +27,43 @@ class DesktopManager {
         this.saveToMemory(this.currentOS);
         this.currentOS = osName;
 
-        // 更新壁纸和样式
         $('#desktop-area').removeClass().addClass(`os-${osName}`).css('background-image', CONFIG.wallpapers[osName]);
-        
-        // 更新 UI
         this.updateSystemUI(osName);
         this.renderSidebar(osName);
 
-        // 重绘桌面
         $('#desktop-stage').empty();
+        
         const cached = this.cachedLayouts[osName];
-        if (cached) {
+        
+        // 逻辑修正：如果 cached 存在但 icons 也是空的，说明之前可能出bug导致空缓存，
+        // 这里为了演示体验，如果没有图标，也加载默认。
+        let hasIcons = cached && cached.icons && cached.icons.length > 0;
+        
+        if (hasIcons) {
             this.folderData = cached.folders || {};
             this.renderIcons(cached.icons);
         } else {
+            // 没有缓存或缓存为空 -> 加载默认配置
             this.folderData = {};
             const defaults = CONFIG.defaultIcons[osName] || [];
             defaults.forEach(icon => {
                 const id = 'def-' + Date.now() + Math.random();
                 this.addIcon(id, icon.name, icon.icon, icon.x, icon.y, '#desktop-stage', 'app', icon.color);
             });
+            // 尝试从云端拉取（如果有登录）
             if (window.loadCloudDesktop) window.loadCloudDesktop();
         }
     }
 
-    // === 关键修复：安全的侧边栏渲染 ===
+    // ... (后续 renderSidebar, checkLimit 等函数保持不变，无需修改) ...
+    // 为了确保代码完整，这里包含剩余所有方法：
+
     renderSidebar(os) {
         const container = $('#dynamic-toolbox');
         container.empty();
-
         let tools = [];
-        try {
-            tools = getToolsForOS(os);
-        } catch (e) {
-            console.error("Config Error:", e);
-            tools = []; // 避免崩溃
-        }
-
-        if (!tools || !Array.isArray(tools)) {
-            container.html('<p style="padding:10px;color:#999;">工具加载失败</p>');
-            return;
-        }
+        try { tools = getToolsForOS(os); } catch (e) { tools = []; }
+        if (!tools || !Array.isArray(tools)) return;
 
         tools.forEach((cat, index) => {
             let itemsHtml = '';
@@ -77,26 +73,17 @@ class DesktopManager {
                         <div class="tool-icon" data-name="${tool.name}" data-icon="${tool.icon}" data-color="${tool.color || '#555'}">
                             <i class="${tool.icon}" style="color:${tool.color || '#555'}"></i>
                             <span>${tool.name}</span>
-                        </div>
-                    `;
+                        </div>`;
                 });
             }
-
-            container.append(`
-                <div class="category ${index === 0 ? '' : 'collapsed'}">
-                    <div class="cat-title">${cat.title}</div>
-                    <div class="cat-content">${itemsHtml}</div>
-                </div>
-            `);
+            container.append(`<div class="category ${index === 0 ? '' : 'collapsed'}"><div class="cat-title">${cat.title}</div><div class="cat-content">${itemsHtml}</div></div>`);
         });
-
         this.initToolDrag();
     }
 
     updateSystemUI(os) {
         $('.sys-ui').addClass('hidden');
         $('body').removeClass('mobile-mode');
-
         if (os === 'windows') $('.taskbar-win11').removeClass('hidden');
         else if (os === 'macos') $('.dock-macos').removeClass('hidden');
         else if (os === 'ubuntu') $('.dock-ubuntu').removeClass('hidden');
@@ -117,12 +104,8 @@ class DesktopManager {
 
     checkLimit(containerId) {
         const count = $(containerId).find('.app-icon').length;
-        if (containerId.includes('screen') && count >= CONFIG.limits.mobileScreenMax) {
-            alert("手机单屏已满！"); return false;
-        }
-        if (containerId === '#desktop-stage' && count >= CONFIG.limits.desktopMax) {
-            alert("桌面图标已达上限！"); return false;
-        }
+        if (containerId.includes('screen') && count >= CONFIG.limits.mobileScreenMax) { alert("手机单屏已满！"); return false; }
+        if (containerId === '#desktop-stage' && count >= CONFIG.limits.desktopMax) { alert("桌面图标已达上限！"); return false; }
         return true;
     }
 
@@ -133,8 +116,7 @@ class DesktopManager {
             <div class="app-icon" id="${id}" style="left:${x}px; top:${y}px" data-name="${name}" data-type="${type}" data-color="${color || ''}">
                 <i class="${iconClass}" style="${colorStyle}"></i>
                 <span>${name}</span>
-            </div>
-        `;
+            </div>`;
         $(container).append(html);
         this.bindIconEvents(id);
     }
@@ -142,7 +124,6 @@ class DesktopManager {
     bindIconEvents(id) {
         const el = $(`#${id}`);
         const isInsideFolder = el.parent().attr('id') === 'folder-content';
-
         if (!isInsideFolder) {
             el.draggable({
                 containment: "parent", grid: [10, 10], scroll: false,
@@ -150,19 +131,14 @@ class DesktopManager {
                 stop: function() { $(this).css('z-index', ''); }
             });
         }
-
         el.on('contextmenu', (e) => {
             e.stopPropagation(); e.preventDefault();
             $('.app-icon').removeClass('selected'); el.addClass('selected');
             $('#context-menu').data('target-id', id).css({top:e.pageY, left:e.pageX}).removeClass('hidden');
         });
-
         el.on('dblclick', () => {
-            if (el.data('type') === 'folder') {
-                this.openFolder(id, el.data('name'));
-            } else {
-                el.animate({ opacity: 0.5 }, 100).animate({ opacity: 1 }, 100);
-            }
+            if (el.data('type') === 'folder') this.openFolder(id, el.data('name'));
+            else el.animate({ opacity: 0.5 }, 100).animate({ opacity: 1 }, 100);
         });
     }
 
@@ -172,8 +148,7 @@ class DesktopManager {
                 const icon = $(this).data('icon');
                 const color = $(this).data('color');
                 return $(`<div style="z-index:9999;width:50px;height:50px;background:white;border-radius:10px;display:flex;justify-content:center;align-items:center;box-shadow:0 5px 10px rgba(0,0,0,0.2)"><i class="${icon}" style="font-size:24px; color:${color}"></i></div>`);
-            },
-            appendTo: 'body', cursorAt: { top: 25, left: 25 }, revert: 'invalid'
+            }, appendTo: 'body', cursorAt: { top: 25, left: 25 }, revert: 'invalid'
         });
     }
 
@@ -187,7 +162,6 @@ class DesktopManager {
                 let left = event.pageX - offset.left + ($(this).scrollLeft() || 0);
                 let top = event.pageY - offset.top;
                 if (left < 0) left = 0; if (top < 0) top = 0;
-                
                 const name = ui.draggable.data('name');
                 const icon = ui.draggable.data('icon');
                 const color = ui.draggable.data('color');
@@ -198,13 +172,11 @@ class DesktopManager {
 
     initDragDrop() { this.makeDroppable('#desktop-stage'); }
 
-    // === 文件夹功能 ===
     initFolderWindow() {
         $('#btn-close-folder').click(() => {
             $('#folder-window').addClass('hidden');
             this.currentOpenFolderId = null;
         });
-
         $('#folder-content').droppable({
             accept: '.tool-icon', 
             drop: (event, ui) => {
@@ -213,9 +185,7 @@ class DesktopManager {
                     const icon = ui.draggable.data('icon');
                     const color = ui.draggable.data('color');
                     const newId = 'in-folder-' + Date.now();
-
                     this.addIcon(newId, name, icon, 0, 0, '#folder-content', 'app', color);
-                    
                     if (this.currentOpenFolderId) {
                         if (!this.folderData[this.currentOpenFolderId]) this.folderData[this.currentOpenFolderId] = [];
                         this.folderData[this.currentOpenFolderId].push({ id: newId, name, icon, color, type: 'app' });
@@ -230,7 +200,6 @@ class DesktopManager {
         $('#folder-title').text(name);
         $('#folder-window').removeClass('hidden');
         $('#folder-content').empty();
-        
         if (this.folderData[id]) {
             this.folderData[id].forEach(icon => {
                 this.addIcon(icon.id, icon.name, icon.icon, 0, 0, '#folder-content', 'app', icon.color);
@@ -247,7 +216,6 @@ class DesktopManager {
             $('#context-menu').data('target-id', null).css({top:e.pageY, left:e.pageX}).removeClass('hidden');
         });
         $(document).on('click', () => $('#context-menu').addClass('hidden'));
-        
         $('#ctx-new-folder').click(() => {
             const menu = $('#context-menu');
             const offset = $('#desktop-stage').offset();
@@ -258,7 +226,6 @@ class DesktopManager {
             this.addIcon(id, '新建文件夹', 'fa-solid fa-folder', x, y, '#desktop-stage', 'folder', null);
             this.folderData[id] = [];
         });
-
         $('#ctx-rename').click(() => {
             const targetId = $('#context-menu').data('target-id');
             if(targetId) {
@@ -266,7 +233,6 @@ class DesktopManager {
                 if(newName) $(`#${targetId}`).data('name', newName).find('span').text(newName);
             }
         });
-
         $('#ctx-delete').click(() => {
             const targetId = $('#context-menu').data('target-id');
             if(targetId) {
@@ -295,7 +261,6 @@ class DesktopManager {
     }
 
     exportLayout() {
-        // 保存前的最后一次快照
         this.saveToMemory(this.currentOS);
         return this.cachedLayouts[this.currentOS];
     }

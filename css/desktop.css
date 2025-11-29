@@ -8,86 +8,125 @@
     background-position: center;
     background-repeat: no-repeat;
     overflow: hidden;
-    /* 默认背景 */
-    background-image: url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+    transition: background-image 0.5s ease;
 }
 
-/* 系统顶部标签 */
+/* 系统顶部标签 - 胶囊样式，居中，解决遮挡 */
 #os-tabs {
-    position: absolute; top: 10px; left: 10px; z-index: 50;
-    display: flex; gap: 5px;
-}
-#os-tabs button {
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
-    backdrop-filter: blur(5px); transition: 0.3s;
-}
-#os-tabs button.active {
-    background: rgba(255,255,255,0.9); color: #000;
+    position: absolute; 
+    top: 15px; 
+    left: 50%; 
+    transform: translateX(-50%); /* 居中 */
+    z-index: 100;
+    display: flex; 
+    gap: 8px;
+    background: rgba(0,0,0,0.3); /* 半透明黑底 */
+    padding: 6px 10px;
+    border-radius: 50px; /* 胶囊圆角 */
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-/* 桌面舞台 */
+#os-tabs button {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    transition: all 0.3s;
+    display: flex; align-items: center; gap: 6px;
+}
+
+#os-tabs button:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+#os-tabs button.active {
+    background: white;
+    color: #333;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* 桌面舞台 - 关键修改 */
 #desktop-stage {
     width: 100%; height: 100%;
     position: relative;
+    /* 增加顶部内边距，确保图标 (0,0) 位置不会被 Tab 栏挡住 */
+    padding-top: 80px; 
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
 }
 
-/* 手机模式 - 分屏容器 */
+/* 手机分屏容器 */
 .mobile-mode #desktop-stage {
     display: flex;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
+    padding: 0; /* 手机模式由内部 screen 处理 padding */
 }
+
 .mobile-screen {
     min-width: 100%;
     height: 100%;
     scroll-snap-align: start;
     position: relative;
+    padding-top: 80px; /* 手机每个屏幕也避开顶部 */
     border-right: 1px dashed rgba(255,255,255,0.1);
-    padding-top: 60px; /* 避开顶部标签 */
-}
-/* 给手机屏幕加一点指示器 */
-.mobile-screen::before {
-    content: 'Screen ' attr(data-index);
-    position: absolute; top: 50%; left: 50%; 
-    transform: translate(-50%, -50%);
-    color: rgba(255,255,255,0.1); font-size: 50px; pointer-events: none;
 }
 
-/* 桌面图标 */
+/* 图标样式微调 */
 .app-icon {
-    width: 70px; height: 85px;
+    width: 72px; 
+    height: 90px; /* 稍微增高给文字留空间 */
     position: absolute;
     display: flex; flex-direction: column; align-items: center;
     cursor: pointer; padding: 5px;
-    border-radius: 5px; transition: background 0.2s;
+    border-radius: 8px; 
+    transition: transform 0.1s, background 0.2s;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
-.app-icon:hover { background: rgba(255,255,255,0.2); }
-.app-icon:active { background: rgba(255,255,255,0.4); }
 
-.app-icon i { font-size: 36px; margin-bottom: 5px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); }
-/* 不同图标颜色 */
-.app-icon[data-name="Chrome"] i { color: #fab1a0; }
-.app-icon[data-name="Word"] i { color: #74b9ff; }
-.app-icon[data-name="Excel"] i { color: #55efc4; }
-.app-icon[data-name="王者荣耀"] i { color: #ffeaa7; }
+.app-icon:hover { background: rgba(255,255,255,0.15); box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+.app-icon:active { transform: scale(0.95); }
+
+/* 图标图片部分 */
+.app-icon i { font-size: 40px; margin-bottom: 5px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
+
+/* 简单的颜色区分 */
+.app-icon[data-name="Chrome"] i { color: #ff7675; }
+.app-icon[data-name="Edge"] i { color: #74b9ff; }
+.app-icon[data-name="Word"] i { color: #0984e3; }
+.app-icon[data-name="Excel"] i { color: #00b894; }
+.app-icon[data-name="WeChat"] i { color: #55efc4; }
+.app-icon[data-name="王者荣耀"] i { color: #fdcb6e; }
 
 .app-icon span {
-    font-size: 12px; color: white; text-align: center;
-    text-shadow: 0 1px 3px black;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;
+    font-size: 13px;
+    line-height: 1.2;
+    text-align: center;
+    overflow: hidden; text-overflow: ellipsis; 
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; /* 支持两行文字 */
+    width: 100%;
 }
 
 /* 右键菜单 */
 #context-menu {
-    position: absolute; width: 150px; background: white;
-    box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-    border-radius: 4px; list-style: none; padding: 5px 0;
+    position: absolute; width: 160px; background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 8px; list-style: none; padding: 6px;
     z-index: 999;
 }
 #context-menu li {
-    padding: 8px 15px; cursor: pointer; color: #333; font-size: 14px;
-    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; cursor: pointer; color: #333; font-size: 14px; border-radius: 4px;
+    display: flex; align-items: center; gap: 10px;
 }
-#context-menu li:hover { background: #f0f0f0; }
-.separator { height: 1px; background: #eee; margin: 4px 0; padding: 0 !important; }
+#context-menu li:hover { background: #0984e3; color: white; }
+.separator { height: 1px; background: #ddd; margin: 4px 6px; padding: 0 !important; }

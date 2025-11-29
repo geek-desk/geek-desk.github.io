@@ -3,17 +3,49 @@ const CONFIG = {
     supabaseUrl: 'https://rjhmezzyjntpcvlycece.supabase.co',
     supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqaG1lenp5am50cGN2bHljZWNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDAzMDIsImV4cCI6MjA3OTk3NjMwMn0.pi5M3kcu-CaJY0ryry8phi9E-SQdRKHGmxsJGIckANA',
 
+    // 壁纸
     wallpapers: {
-        windows: 'url("https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&w=1920&q=80")', // 自然风尘
+        windows: 'url("https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&w=1920&q=80")',
         macos: 'url("https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&w=1920&q=80")',
         ubuntu: 'url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&w=1920&q=80")',
         android: 'url("https://images.unsplash.com/photo-1550684848-fac1c5b4e853?ixlib=rb-4.0.3&w=1080&q=80")',
-        ios: 'url("https://images.unsplash.com/photo-1614730341194-75c6074065db?ixlib=rb-4.0.3&w=1080&q=80")' // 火星
+        ios: 'url("https://images.unsplash.com/photo-1614730341194-75c6074065db?ixlib=rb-4.0.3&w=1080&q=80")'
     },
 
+    // 限制
     limits: { desktopMax: 50, mobileScreenMax: 20, folderMax: 10 },
 
-    // 默认桌面图标
+    // === 关键修复：补全缺失的多语言配置 (i18n) ===
+    i18n: {
+        zh: {
+            "title": "我的云桌面",
+            "guest": "游客模式",
+            "login_btn": "登录 / 注册",
+            "logout": "退出",
+            "save": "保存",
+            "save_public": "公开",
+            "world": "世界广场",
+            "back_home": "返回我的桌面",
+            "comment_ph": "写下你的留言...",
+            "send": "发送",
+            "reg_check_email": "注册成功！请检查邮箱验证。"
+        },
+        en: {
+            "title": "Cloud Desktop",
+            "guest": "Guest Mode",
+            "login_btn": "Login / Sign Up",
+            "logout": "Logout",
+            "save": "Save",
+            "save_public": "Public",
+            "world": "World Plaza",
+            "back_home": "Back Home",
+            "comment_ph": "Leave a comment...",
+            "send": "Send",
+            "reg_check_email": "Success! Check email to confirm."
+        }
+    },
+
+    // 默认图标 (带颜色)
     defaultIcons: {
         windows: [
             { name: "我的电脑", icon: "fa-solid fa-desktop", color: "#0984e3", x: 20, y: 20 },
@@ -33,24 +65,24 @@ const CONFIG = {
         ]
     },
 
-    // 侧边栏工具库 (海量)
+    // 侧边栏工具库
     sidebarTools: {
         windows: [
-            { title: "办公软件", items: [ { name: "Word", icon: "fa-solid fa-file-word", color: "#0984e3" }, { name: "Excel", icon: "fa-solid fa-file-excel", color: "#00b894" }, { name: "PPT", icon: "fa-solid fa-file-powerpoint", color: "#e17055" }, { name: "Outlook", icon: "fa-solid fa-envelope", color: "#0984e3" }, { name: "WPS", icon: "fa-solid fa-file-pen", color: "#d63031" } ] },
+            { title: "办公软件", items: [ { name: "Word", icon: "fa-solid fa-file-word", color: "#0984e3" }, { name: "Excel", icon: "fa-solid fa-file-excel", color: "#00b894" }, { name: "PPT", icon: "fa-solid fa-file-powerpoint", color: "#e17055" }, { name: "WPS", icon: "fa-solid fa-file-pen", color: "#d63031" }, { name: "Outlook", icon: "fa-solid fa-envelope", color: "#0984e3" } ] },
             { title: "开发工具", items: [ { name: "VS Code", icon: "fa-solid fa-code", color: "#00a8e8" }, { name: "GitHub", icon: "fa-brands fa-github", color: "#2d3436" }, { name: "Node.js", icon: "fa-brands fa-node", color: "#2ecc71" }, { name: "Terminal", icon: "fa-solid fa-terminal", color: "#333" }, { name: "Python", icon: "fa-brands fa-python", color: "#f1c40f" } ] },
-            { title: "游戏娱乐", items: [ { name: "Steam", icon: "fa-brands fa-steam", color: "#2c3e50" }, { name: "LOL", icon: "fa-solid fa-gamepad", color: "#f1c40f" }, { name: "Spotify", icon: "fa-brands fa-spotify", color: "#2ecc71" }, { name: "Bilibili", icon: "fa-brands fa-bilibili", color: "#00a1d6" }, { name: "Discord", icon: "fa-brands fa-discord", color: "#7289da" } ] },
-            { title: "系统网络", items: [ { name: "Chrome", icon: "fa-brands fa-chrome", color: "#fab1a0" }, { name: "Edge", icon: "fa-brands fa-edge", color: "#74b9ff" }, { name: "WeChat", icon: "fa-brands fa-weixin", color: "#2ecc71" }, { name: "QQ", icon: "fa-brands fa-qq", color: "#3498db" } ] }
+            { title: "娱乐", items: [ { name: "Steam", icon: "fa-brands fa-steam", color: "#2c3e50" }, { name: "Spotify", icon: "fa-brands fa-spotify", color: "#2ecc71" }, { name: "Bilibili", icon: "fa-brands fa-bilibili", color: "#00a1d6" }, { name: "Discord", icon: "fa-brands fa-discord", color: "#7289da" } ] },
+            { title: "网络", items: [ { name: "Chrome", icon: "fa-brands fa-chrome", color: "#fab1a0" }, { name: "Edge", icon: "fa-brands fa-edge", color: "#74b9ff" }, { name: "WeChat", icon: "fa-brands fa-weixin", color: "#2ecc71" }, { name: "QQ", icon: "fa-brands fa-qq", color: "#3498db" } ] }
         ],
         macos: [
-            { title: "Apple Apps", items: [ { name: "Safari", icon: "fa-brands fa-safari", color: "#0984e3" }, { name: "Music", icon: "fa-solid fa-music", color: "#ff7675" }, { name: "Photos", icon: "fa-solid fa-images", color: "rainbow" }, { name: "TV", icon: "fa-solid fa-tv", color: "#2d3436" } ] },
+            { title: "Apple Apps", items: [ { name: "Safari", icon: "fa-brands fa-safari", color: "#0984e3" }, { name: "Music", icon: "fa-solid fa-music", color: "#ff7675" }, { name: "Photos", icon: "fa-solid fa-images", color: "#e84393" }, { name: "TV", icon: "fa-solid fa-tv", color: "#2d3436" } ] },
             { title: "Creative", items: [ { name: "Photoshop", icon: "fa-solid fa-camera-retro", color: "#0984e3" }, { name: "Figma", icon: "fa-brands fa-figma", color: "#00b894" }, { name: "Sketch", icon: "fa-solid fa-diamond", color: "#f1c40f" } ] }
         ],
         mobile: [
-            { title: "社交生活", items: [ { name: "WeChat", icon: "fa-brands fa-weixin", color: "#2ecc71" }, { name: "TikTok", icon: "fa-brands fa-tiktok", color: "#2d3436" }, { name: "Weibo", icon: "fa-brands fa-weibo", color: "#e74c3c" }, { name: "Taobao", icon: "fa-solid fa-bag-shopping", color: "#e67e22" } ] },
-            { title: "工具", items: [ { name: "Alipay", icon: "fa-brands fa-alipay", color: "#0984e3" }, { name: "Maps", icon: "fa-solid fa-map-location-dot", color: "#27ae60" }, { name: "Weather", icon: "fa-solid fa-cloud-sun", color: "#f39c12" }, { name: "Camera", icon: "fa-solid fa-camera", color: "#95a5a6" } ] },
-            { title: "游戏", items: [ { name: "Honor", icon: "fa-solid fa-shield-halved", color: "#f1c40f" }, { name: "PUBG", icon: "fa-solid fa-person-rifle", color: "#e67e22" }, { name: "Genshin", icon: "fa-solid fa-star", color: "#a29bfe" } ] }
+            { title: "社交生活", items: [ { name: "微信", icon: "fa-brands fa-weixin", color: "#2ecc71" }, { name: "抖音", icon: "fa-brands fa-tiktok", color: "#2d3436" }, { name: "微博", icon: "fa-brands fa-weibo", color: "#e74c3c" }, { name: "小红书", icon: "fa-solid fa-book-open", color: "#e84393" } ] },
+            { title: "工具", items: [ { name: "支付宝", icon: "fa-brands fa-alipay", color: "#0984e3" }, { name: "地图", icon: "fa-solid fa-map-location-dot", color: "#27ae60" }, { name: "天气", icon: "fa-solid fa-cloud-sun", color: "#f39c12" } ] },
+            { title: "游戏", items: [ { name: "王者荣耀", icon: "fa-solid fa-shield-halved", color: "#f1c40f" }, { name: "和平精英", icon: "fa-solid fa-person-rifle", color: "#e67e22" }, { name: "原神", icon: "fa-solid fa-star", color: "#a29bfe" } ] }
         ],
-        ubuntu: [ { title: "Dev", items: [ { name: "Terminal", icon: "fa-solid fa-terminal", color: "#333" }, { name: "Docker", icon: "fa-brands fa-docker", color: "#3498db" } ] } ]
+        ubuntu: [ { title: "System", items: [ { name: "Terminal", icon: "fa-solid fa-terminal", color: "#333" }, { name: "Docker", icon: "fa-brands fa-docker", color: "#3498db" } ] } ]
     }
 };
 

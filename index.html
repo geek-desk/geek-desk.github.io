@@ -12,11 +12,9 @@
 <body>
 
     <div id="app-container">
-        
         <!-- 左侧：桌面区域 -->
         <div id="desktop-area" class="os-windows">
-            
-            <!-- 1. 顶部胶囊标签 -->
+            <!-- 胶囊标签 -->
             <div id="os-tabs">
                 <button data-os="windows" class="active"><i class="fa-brands fa-windows"></i> Win11</button>
                 <button data-os="macos"><i class="fa-brands fa-apple"></i> macOS</button>
@@ -25,63 +23,62 @@
                 <button data-os="ios"><i class="fa-brands fa-app-store-ios"></i> iOS</button>
             </div>
 
-            <!-- 2. 桌面图标舞台 -->
-            <!-- 注意：增加了 phone-frame-container 包裹，用于手机模式显示外壳 -->
+            <!-- 舞台 -->
             <div id="stage-wrapper">
                 <div id="desktop-stage">
-                    <!-- 默认图标 -->
-                    <div class="app-icon" id="my-computer" style="top:20px; left:20px;" data-name="我的电脑">
-                        <i class="fa-solid fa-desktop" style="color: #fff;"></i>
-                        <span>我的电脑</span>
-                    </div>
+                    <!-- 图标将由 JS 动态生成 -->
                 </div>
             </div>
 
-            <!-- 3. 各系统的特色 UI (默认隐藏，JS控制显示) -->
-            
-            <!-- Windows 11 任务栏 -->
+            <!-- 系统特色 UI -->
+            <!-- Win11 任务栏 -->
             <div class="sys-ui taskbar-win11 hidden">
                 <div class="start-btn"><i class="fa-brands fa-windows"></i></div>
-                <div class="task-icons">
-                    <i class="fa-brands fa-edge"></i>
-                    <i class="fa-solid fa-folder"></i>
-                    <i class="fa-brands fa-microsoft"></i>
-                </div>
-                <div class="tray-area">
-                    <i class="fa-solid fa-wifi"></i>
-                    <i class="fa-solid fa-volume-high"></i>
-                    <span class="clock">10:25</span>
-                </div>
+                <div class="task-icons"><i class="fa-brands fa-edge"></i><i class="fa-solid fa-folder"></i></div>
+                <div class="tray-area"><span class="clock">10:25</span></div>
             </div>
 
-            <!-- macOS Dock 栏 -->
+            <!-- macOS Dock -->
             <div class="sys-ui dock-macos hidden">
                 <div class="dock-container">
-                    <div class="dock-item"><i class="fa-solid fa-face-smile"></i></div>
                     <div class="dock-item"><i class="fa-brands fa-safari"></i></div>
-                    <div class="dock-item"><i class="fa-solid fa-message"></i></div>
                     <div class="dock-item"><i class="fa-solid fa-music"></i></div>
-                    <div class="dock-separator"></div>
                     <div class="dock-item"><i class="fa-solid fa-gear"></i></div>
-                    <div class="dock-item"><i class="fa-solid fa-trash"></i></div>
                 </div>
             </div>
 
-            <!-- 手机顶部状态栏 -->
+            <!-- Ubuntu Dock (左侧) -->
+            <div class="sys-ui dock-ubuntu hidden">
+                <div class="dock-item"><i class="fa-brands fa-firefox-browser" style="color:#e67e22"></i></div>
+                <div class="dock-item"><i class="fa-solid fa-folder" style="color:#f39c12"></i></div>
+                <div class="dock-item"><i class="fa-solid fa-terminal" style="color:#333"></i></div>
+                <div class="dock-item"><i class="fa-brands fa-amazon" style="color:#fff"></i></div>
+                <div class="dock-spacer"></div>
+                <div class="dock-item"><i class="fa-solid fa-grid-round"></i></div>
+            </div>
+
+            <!-- 手机状态栏 -->
             <div class="sys-ui status-bar-mobile hidden">
                 <span class="time">10:25</span>
                 <div class="notch"></div>
-                <div class="right-icons">
-                    <i class="fa-solid fa-signal"></i>
-                    <i class="fa-solid fa-wifi"></i>
-                    <i class="fa-solid fa-battery-full"></i>
+                <div class="right-icons"><i class="fa-solid fa-battery-full"></i></div>
+            </div>
+
+            <!-- 文件夹打开时的窗口 -->
+            <div id="folder-window" class="hidden">
+                <div class="folder-header">
+                    <span id="folder-title">新建文件夹</span>
+                    <button id="btn-close-folder">X</button>
+                </div>
+                <div id="folder-content">
+                    <!-- 文件夹内的图标 -->
                 </div>
             </div>
 
             <!-- 右键菜单 -->
             <ul id="context-menu" class="hidden">
                 <li id="ctx-new-folder"><i class="fa-solid fa-folder-plus"></i> 新建文件夹</li>
-                <li id="ctx-refresh"><i class="fa-solid fa-rotate-right"></i> 刷新</li>
+                <li id="ctx-rename"><i class="fa-solid fa-pen-to-square"></i> 重命名</li>
                 <li class="separator"></li>
                 <li id="ctx-delete" style="color:#ff7675"><i class="fa-solid fa-trash"></i> 删除</li>
             </ul>
@@ -89,27 +86,16 @@
 
         <!-- 右侧：工具栏 -->
         <div id="sidebar">
-            <button id="sidebar-toggle-btn" title="折叠/展开">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
+            <button id="sidebar-toggle-btn"><i class="fa-solid fa-chevron-right"></i></button>
             <div class="ad-slot"><p>Google Adsense</p></div>
-
-            <div class="world-link-btn" id="btn-open-world">
-                <i class="fa-solid fa-earth-americas"></i> 世界广场
-            </div>
+            <div class="world-link-btn" id="btn-open-world"><i class="fa-solid fa-earth-americas"></i> 世界广场</div>
 
             <div id="user-panel">
                 <div id="guest-view">
-                    <p style="font-size:12px;color:#666;margin-bottom:5px">游客模式</p>
                     <button id="btn-login-modal" class="btn-primary" style="width:100%">登录/注册</button>
                 </div>
                 <div id="logged-view" style="display:none;">
                     <div class="user-info"><i class="fa-solid fa-user"></i> <span id="user-nickname"></span></div>
-                    <div class="stats">
-                        <span>❤️ <span id="user-likes">0</span></span>
-                        <span>⭐ <span id="user-colls">0</span></span>
-                    </div>
                     <div class="user-actions">
                         <button id="btn-save" class="btn-success">保存</button>
                         <button id="btn-logout" class="btn-danger">退出</button>
@@ -117,30 +103,12 @@
                 </div>
             </div>
 
-            <div class="toolbox">
-                <div class="category">
-                    <div class="cat-title"><i class="fa-solid fa-gamepad"></i> 游戏</div>
-                    <div class="cat-content">
-                        <div class="tool-icon" data-name="王者荣耀" data-icon="fa-shield-halved"><i class="fa-solid fa-shield-halved" style="color:#fdcb6e"></i><span>王者荣耀</span></div>
-                        <div class="tool-icon" data-name="原神" data-icon="fa-star"><i class="fa-solid fa-star" style="color:#a29bfe"></i><span>原神</span></div>
-                        <div class="tool-icon" data-name="Steam" data-icon="fa-brands fa-steam"><i class="fa-brands fa-steam" style="color:#0984e3"></i><span>Steam</span></div>
-                        <div class="tool-icon" data-name="Minecraft" data-icon="fa-cubes"><i class="fa-solid fa-cubes" style="color:#2ecc71"></i><span>Minecraft</span></div>
-                    </div>
-                </div>
-                <div class="category">
-                    <div class="cat-title"><i class="fa-solid fa-briefcase"></i> 应用</div>
-                    <div class="cat-content">
-                        <div class="tool-icon" data-name="Chrome" data-icon="fa-brands fa-chrome"><i class="fa-brands fa-chrome" style="color:#ff7675"></i><span>Chrome</span></div>
-                        <div class="tool-icon" data-name="WeChat" data-icon="fa-comments"><i class="fa-solid fa-comments" style="color:#00b894"></i><span>微信</span></div>
-                        <div class="tool-icon" data-name="抖音" data-icon="fa-music"><i class="fa-solid fa-music" style="color:#2d3436"></i><span>抖音</span></div>
-                        <div class="tool-icon" data-name="支付宝" data-icon="fa-wallet"><i class="fa-solid fa-wallet" style="color:#0984e3"></i><span>支付宝</span></div>
-                    </div>
-                </div>
-            </div>
+            <!-- 这里的工具栏现在是空的，由 JS 填充 -->
+            <div class="toolbox" id="dynamic-toolbox"></div>
         </div>
     </div>
 
-    <!-- 弹窗部分保持不变 -->
+    <!-- 弹窗保持不变... 略 (直接复制之前的即可，不影响) -->
     <div id="modal-overlay" class="overlay hidden">
         <div class="modal-box">
             <h3>登录</h3>

@@ -12,6 +12,7 @@ const SYSTEMS = {
 
 // --- 2. Wallpaper List (壁纸列表) ---
 const WALLPAPERS = {
+    // Win 11 风格壁纸
     win11_default: { name: 'Win 11 Bloom', url: 'https://images.unsplash.com/photo-1632734185121-b3b320d32c02?q=80&w=2070&auto=format&fit=crop' }, 
     macos_default: { name: 'macOS Valley', url: 'https://images.unsplash.com/photo-1549497551-f76c5b76ed5a?q=80&w=2070&auto=format&fit=crop' },
     android_default: { name: 'Android Abstract', url: 'https://images.unsplash.com/photo-1623577319409-e85dfb9087c5?q=80&w=1887&auto=format&fit=crop' }, 
@@ -19,7 +20,7 @@ const WALLPAPERS = {
     ubuntu_default: { name: 'Ubuntu Dark', url: 'https://images.unsplash.com/photo-1510525000578-83b63297a7a5?q=80&w=2070&auto=format&fit=crop' }
 };
 
-// --- 3. App/Icon List (应用/图标列表) ---
+// --- 3. App/Icon List (应用/图标列表 - 使用更具色彩的 Simple Icons/Octicons) ---
 const APP_LIST = [
     // 系统应用 
     { id: 'app-thispc', name: 'This PC', icon_url: 'https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/device-desktop-24.svg', sys_category: ['windows', 'ubuntu'], func_category: 'system' },

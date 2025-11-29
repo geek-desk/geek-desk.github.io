@@ -3,7 +3,7 @@ class DesktopManager {
     constructor() {
         this.currentOS = 'windows';
         this.cachedLayouts = { windows: null, macos: null, ubuntu: null, android: null, ios: null };
-        this.folderData = {}; 
+        this.folderData = {};
         this.currentOpenFolderId = null;
         this.init();
     }
@@ -12,61 +12,111 @@ class DesktopManager {
         this.initDragDrop();
         this.initContextMenu();
         this.initFolderWindow();
-        this.switchOS('windows');
-        $(document).on('click', '.cat-title', function() { $(this).parent().toggleClass('collapsed'); });
         
-        // 壁纸点击事件
+        // 壁纸点击事件：换肤
         $(document).on('click', '.wallpaper-item', function() {
             const url = $(this).data('url');
+            // 直接应用壁纸
             $('#desktop-area').css('background-image', `url(${url})`);
-            // 记录用户选择的壁纸 (可选：存入 savedLayout)
         });
+
+        this.switchOS('windows');
+        $(document).on('click', '.cat-title', function() { $(this).parent().toggleClass('collapsed'); });
     }
 
     switchOS(osName) {
         this.saveToMemory(this.currentOS);
         this.currentOS = osName;
+
+        // 1. 先恢复默认壁纸（避免闪烁上一张图）
         $('#desktop-area').removeClass().addClass(`os-${osName}`).css('background-image', CONFIG.wallpapers[osName]);
+        
         this.updateSystemUI(osName);
         this.renderSidebar(osName);
         $('#desktop-stage').empty();
         
+        // 2. 加载数据
         const cached = this.cachedLayouts[osName];
-        if (cached && cached.icons && cached.icons.length > 0) {
+        if (cached) {
             this.folderData = cached.folders || {};
-            this.renderIcons(cached.icons);
+            // 如果缓存里有自定义壁纸，应用它
+            if (cached.customWallpaper) {
+                $('#desktop-area').css('background-image', cached.customWallpaper);
+            }
+            if (cached.icons) this.renderIcons(cached.icons);
         } else {
+            // 无缓存，加载默认
             this.folderData = {};
             const defaults = CONFIG.defaultIcons[osName] || [];
             defaults.forEach(icon => {
                 this.addIcon('def-'+Date.now()+Math.random(), icon.name, icon.icon, icon.x, icon.y, '#desktop-stage', 'app', icon.color);
             });
+            // 尝试云端同步
             if (window.loadCloudDesktop) window.loadCloudDesktop();
         }
     }
 
+    // === 核心修改：保存壁纸 ===
+    saveToMemory(os) {
+        if(!os) return;
+        const icons = [];
+        $('#desktop-stage .app-icon').each(function() {
+            const el = $(this);
+            icons.push({ id:el.attr('id'), name:el.data('name'), icon:el.find('i').attr('class'), color:el.data('color'), x:parseFloat(el.css('left')), y:parseFloat(el.css('top')), type:el.data('type'), parent:el.parent().attr('id') });
+        });
+        
+        // 获取当前显示的壁纸
+        const currentBg = $('#desktop-area').css('background-image');
+        
+        // 保留公开状态
+        let isPublic = false;
+        if(this.cachedLayouts[os] && this.cachedLayouts[os].is_public) isPublic = this.cachedLayouts[os].is_public;
+
+        this.cachedLayouts[os] = { 
+            icons: icons, 
+            folders: this.folderData, 
+            is_public: isPublic,
+            customWallpaper: currentBg // 保存壁纸！
+        };
+    }
+
+    loadLayout(data) {
+        if(!data) return;
+        this.cachedLayouts[this.currentOS] = data;
+        this.folderData = data.folders || {};
+        
+        $('#desktop-stage').empty();
+        
+        // 恢复壁纸
+        if (data.customWallpaper) {
+            $('#desktop-area').css('background-image', data.customWallpaper);
+        } else {
+            // 如果没自定义，用默认
+            $('#desktop-area').css('background-image', CONFIG.wallpapers[this.currentOS]);
+        }
+
+        if(data.icons) this.renderIcons(data.icons);
+    }
+
+    // ... (以下部分保持不变，包括 renderSidebar, updateSystemUI, checkLimit, addIcon 等) ...
+    // 为了确保代码完整性，请保留之前发给您的 desktop.js 后半部分
+    // 包括: renderSidebar, updateSystemUI, renderMobileScreens, checkLimit, addIcon, bindIconEvents, initToolDrag, makeDroppable, initDragDrop, initFolderWindow, openFolder, initContextMenu, renderIcons
+    
+    // ... [请确保这里粘贴了完整的 helper 函数] ...
+    
     renderSidebar(os) {
-        const container = $('#dynamic-toolbox');
-        container.empty();
+        const container = $('#dynamic-toolbox'); container.empty();
         const tools = getToolsForOS(os);
         if(!tools) return;
-
         tools.forEach((cat, index) => {
-            let itemsHtml = '';
-            
-            // 渲染壁纸
-            if (cat.type === 'wallpaper') {
-                cat.items.forEach(wp => {
-                    itemsHtml += `<div class="wallpaper-item" style="background-image:url(${wp.img})" data-url="${wp.url}"></div>`;
-                });
-                container.append(`<div class="category"><div class="cat-title" data-i18n="wallpaper">Wallpapers</div><div class="cat-content wallpapers">${itemsHtml}</div></div>`);
-            } 
-            // 渲染普通工具
-            else {
-                cat.items.forEach(tool => {
-                    itemsHtml += `<div class="tool-icon" data-name="${tool.name}" data-icon="${tool.icon}" data-color="${tool.color}"><i class="${tool.icon}" style="color:${tool.color}"></i><span>${tool.name}</span></div>`;
-                });
-                container.append(`<div class="category ${index>1?'collapsed':''}"><div class="cat-title">${cat.title}</div><div class="cat-content">${itemsHtml}</div></div>`);
+            let items = '';
+            // 壁纸渲染逻辑
+            if (cat.title === 'wallpaper' || cat.type === 'wallpaper') {
+                cat.items.forEach(img => items += `<div class="wallpaper-item" style="background-image:url(${img.img})" data-url="${img.url}"></div>`);
+                container.append(`<div class="category"><div class="cat-title">Wallpapers</div><div class="cat-content wallpapers">${items}</div></div>`);
+            } else {
+                cat.items.forEach(t => items += `<div class="tool-icon" data-name="${t.name}" data-icon="${t.icon}" data-color="${t.color}"><i class="${t.icon}" style="color:${t.color}"></i><span>${t.name}</span></div>`);
+                container.append(`<div class="category ${index===0?'':'collapsed'}"><div class="cat-title">${cat.title}</div><div class="cat-content">${items}</div></div>`);
             }
         });
         this.initToolDrag();
@@ -180,41 +230,20 @@ class DesktopManager {
         $(document).on('click', () => $('#context-menu').addClass('hidden'));
         $('#ctx-new-folder').click(() => {
             const off = $('#desktop-stage').offset(), m = $('#context-menu');
-            this.addIcon('folder-'+Date.now(), 'New Folder', 'fa-solid fa-folder', parseInt(m.css('left'))-off.left, parseInt(m.css('top'))-off.top, '#desktop-stage', 'folder', null);
+            this.addIcon('folder-'+Date.now(), '新建文件夹', 'fa-solid fa-folder', parseInt(m.css('left'))-off.left, parseInt(m.css('top'))-off.top, '#desktop-stage', 'folder', null);
         });
         $('#ctx-rename').click(() => {
             const tid = $('#context-menu').data('target-id');
-            if(tid) { const n = prompt("Rename:"); if(n) $(`#${tid} span`).text(n); }
+            if(tid) { const n = prompt("重命名："); if(n) $(`#${tid} span`).text(n); }
         });
         $('#ctx-delete').click(() => {
             const tid = $('#context-menu').data('target-id');
             if(tid) { $(`#${tid}`).remove(); if(this.folderData[tid]) delete this.folderData[tid]; }
         });
     }
-
-    saveToMemory(os) {
-        const icons = [];
-        $('#desktop-stage .app-icon').each(function() {
-            const el = $(this);
-            icons.push({ id:el.attr('id'), name:el.data('name'), icon:el.find('i').attr('class'), color:el.data('color'), x:parseFloat(el.css('left')), y:parseFloat(el.css('top')), type:el.data('type'), parent:el.parent().attr('id') });
-        });
-        // 关键：保留 is_public 状态
-        let isPublic = false;
-        if (this.cachedLayouts[os] && this.cachedLayouts[os].is_public) isPublic = this.cachedLayouts[os].is_public;
-        
-        this.cachedLayouts[os] = { icons, folders: this.folderData, is_public: isPublic };
-    }
     
+    // exportLayout & renderIcons helper
     exportLayout() { this.saveToMemory(this.currentOS); return this.cachedLayouts[this.currentOS]; }
-    
-    loadLayout(data) {
-        if(!data) return;
-        this.cachedLayouts[this.currentOS] = data;
-        this.folderData = data.folders || {};
-        $('#desktop-stage').empty();
-        if(data.icons) this.renderIcons(data.icons);
-    }
-    
     renderIcons(icons) {
         icons.forEach(i => {
             let c = '#'+i.parent; if($(c).length===0) c='#desktop-stage';

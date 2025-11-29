@@ -3,74 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-System Desktop Simulator</title>
-    
-    <link rel="stylesheet" href="/css/style.css">
-    
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <title>桌面分享游戏</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 </head>
 <body>
 
-    <div id="main-app">
-        
-        <div id="top-bar">
-            <span class="app-title">Multi-System Sim</span>
-            <div id="system-tabs">
-                </div>
-            <div class="user-profile">⚙️</div>
-        </div>
+<div id="toolbar"></div>
 
-        <div id="split-container">
-            
-            <div id="desktop-area">
-                <div id="desktop-background"></div>
-                <div id="icon-area">
-                    </div>
-                <div id="screen-indicator"></div>
-                <div id="system-dock">
-                    </div>
-            </div>
-            
-            <div id="right-panel-container">
-                
-                <div id="toolbox-sidebar">
-                    <div id="sidebar-categories">
-                        </div>
-                    <div id="sidebar-icon-list">
-                        </div>
-                </div>
+<div id="desktop-area">
+    <!-- 用户桌面区域 -->
+</div>
 
-                <div id="adsense-area">
-                    <p>[AdSense Banner Area: 100px Height]</p>
-                </div>
-
-                <div id="user-panel">
-                    <h3>👤 My Desktop</h3>
-                    
-                    <div class="user-stats">
-                        <p>
-                            <span id="stat-likes">0</span> ❤️ Likes | 
-                            <span id="stat-favs">0</span> ⭐ Favorites
-                        </p>
-                    </div>
-                    
-                    <div class="control-section">
-                        <label for="visibility-toggle">🔒 Desktop Visibility:</label>
-                        <button id="visibility-toggle" data-status="private">Private</button>
-                    </div>
-
-                    <button id="world-link-btn" class="action-btn">
-                        <img src="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/svg/solid/bxs-planet.svg" alt="World Icon">
-                        World Page (View Public Desktops)
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="/js/data.js"></script>
-    <script src="/js/core.js"></script>
-    <script src="/js/drag-handler.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/desktop.js"></script>
+<script src="js/toolbar.js"></script>
 </body>
 </html>
-

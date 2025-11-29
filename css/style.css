@@ -1,60 +1,90 @@
-$(document).ready(function() {
-    let isDragging = false;
-    let $draggedIcon = null;
-    let offsetX, offsetY;
+/* ... (接上一步的 style.css 内容) ... */
 
-    // 鼠标按下事件：开始拖动
-    $('#icon-area').on('mousedown', '.desktop-icon', function(e) {
-        if (e.button !== 0) return;
-        
-        isDragging = true;
-        $draggedIcon = $(this);
-        
-        offsetX = e.clientX - $draggedIcon.offset().left;
-        offsetY = e.clientY - $draggedIcon.offset().top;
-        
-        // 提升 z-index
-        $draggedIcon.css('z-index', 100); 
-    });
+/* --- 手机模式下的桌面容器 (重要) --- */
+#desktop-area.mobile-mode {
+    /* 模拟手机屏幕比例 */
+    width: 350px; 
+    height: 90vh; 
+    margin: 5vh auto; /* 居中显示 */
+    border: 10px solid #000;
+    border-radius: 30px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    /* 在媒体查询中，手机模式下的桌面应覆盖全屏 */
+}
 
-    // 鼠标移动事件：拖动中
-    $(document).on('mousemove', function(e) {
-        if (!isDragging || !$draggedIcon) return;
-        
-        e.preventDefault(); 
+@media (max-width: 768px) {
+    #desktop-area {
+        height: 100%; /* 在手机端，桌面区域占用整个可用高度 */
+        margin: 0;
+        width: 100%;
+        border: none;
+        border-radius: 0;
+    }
+    
+    /* 手机系统在小屏上，需要去除模拟框 */
+    #desktop-area.mobile-mode {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        border: none;
+        border-radius: 0;
+    }
+}
 
-        let newX = e.clientX - offsetX;
-        let newY = e.clientY - offsetY;
+/* --- 手机分屏指示器 --- */
+#screen-indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+    display: none; /* 默认隐藏 */
+}
 
-        // 边界检查
-        const $iconArea = $('#icon-area');
-        const iconAreaWidth = $iconArea.width();
-        const iconAreaHeight = $iconArea.height();
-        const iconWidth = $draggedIcon.outerWidth();
-        const iconHeight = $draggedIcon.outerHeight();
-        
-        newX = Math.max(0, Math.min(newX, iconAreaWidth - iconWidth));
-        newY = Math.max(0, Math.min(newY, iconAreaHeight - iconHeight));
+#screen-indicator.visible {
+    display: flex;
+}
 
-        // 更新图标位置
-        $draggedIcon.css({
-            left: newX + 'px',
-            top: newY + 'px'
-        });
-    });
+.screen-dot {
+    width: 8px;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
 
-    // 鼠标松开事件：结束拖动
-    $(document).on('mouseup', function() {
-        if (isDragging && $draggedIcon) {
-            isDragging = false;
-            $draggedIcon.css('z-index', ''); 
+.screen-dot.active {
+    background-color: white;
+}
 
-            // 在这里添加保存位置到 Supabase 的代码 (后续步骤)
-            const finalX = parseInt($draggedIcon.css('left'));
-            const finalY = parseInt($draggedIcon.css('top'));
-            
-            console.log(`Icon ${$draggedIcon.attr('id')} moved to (${finalX}, ${finalY}). Needs to be saved to Supabase.`);
-        }
-        $draggedIcon = null;
-    });
-});
+/* --- 侧边栏图标样式 --- */
+.sidebar-icon {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 80px;
+    margin: 10px 5px;
+    cursor: grab; /* 提示可拖动 */
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.sidebar-icon:hover {
+    background-color: #eee;
+}
+
+.sidebar-icon img {
+    width: 32px;
+    height: 32px;
+}
+
+.sidebar-icon span {
+    font-size: 11px;
+    color: #333;
+    margin-top: 5px;
+    word-break: break-all;
+}

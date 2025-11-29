@@ -1,7 +1,7 @@
 // js/auth.js
 const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 let currentUser = null;
-let viewingDesktopId = null; // 当前正在查看的别人的桌面ID
+let viewingDesktopId = null; 
 
 async function initAuth() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -25,19 +25,17 @@ function handleLoginSuccess(user) {
 $('#btn-do-login').click(async () => {
     const email = $('#email').val();
     const password = $('#password').val();
-    if(!email || !password) return alert("请输入完整信息");
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert("登录失败: " + error.message);
+    if (error) alert("Error: " + error.message);
     else handleLoginSuccess(data.user);
 });
 
 $('#btn-do-signup').click(async () => {
     const email = $('#email').val();
     const password = $('#password').val();
-    if(!email || !password) return alert("请输入完整信息");
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) alert("Error: " + error.message);
-    else alert(t("reg_check_email")); // 使用配置里的提示
+    else alert(t("reg_check_email"));
 });
 
 $('#btn-logout').click(async () => {
@@ -45,11 +43,16 @@ $('#btn-logout').click(async () => {
     location.reload();
 });
 
-// 保存 (支持公开设置)
+// 保存 (仅当前OS)
 async function saveDesktopData(isPublic) {
-    if (!currentUser) return alert("请先登录！");
+    if (!currentUser) return alert("Please login");
     const os = window.desktopManager.currentOS;
-    const layout = window.desktopManager.exportLayout();
+    const layout = window.desktopManager.exportLayout(); // 此时 layout 包含 icons 和 folders
+
+    // 需要确保 layout 结构里有 icons 和 folders
+    // 同时也更新本地缓存的 is_public 状态
+    if (!window.desktopManager.cachedLayouts[os]) window.desktopManager.cachedLayouts[os] = {};
+    window.desktopManager.cachedLayouts[os].is_public = isPublic;
 
     const { error } = await supabase.from('desktops').upsert({ 
         user_id: currentUser.id, 
@@ -58,20 +61,29 @@ async function saveDesktopData(isPublic) {
         is_public: isPublic
     }, { onConflict: 'user_id, os_type' });
 
-    if (error) alert("保存失败 (请确保已执行SQL): " + error.message);
-    else alert("保存成功！");
+    if (error) alert("Save Failed: " + error.message);
+    else alert(t("save") + " Success!");
 }
 window.saveDesktopData = saveDesktopData;
 
-// 加载自己
+// 加载当前OS
 async function loadCloudDesktop() {
     if (!currentUser) return;
     const os = window.desktopManager.currentOS;
     const { data, error } = await supabase.from('desktops').select('layout_data, is_public').eq('user_id', currentUser.id).eq('os_type', os).maybeSingle();
     
-    if (data && data.layout_data) {
-        window.desktopManager.loadLayout(data.layout_data);
+    // 每次切换OS都要更新 Checkbox 状态
+    if (data) {
+        if (data.layout_data) window.desktopManager.loadLayout(data.layout_data);
+        // 更新 UI
         $('#chk-public').prop('checked', data.is_public);
+        // 更新内存缓存
+        if (window.desktopManager.cachedLayouts[os]) {
+            window.desktopManager.cachedLayouts[os].is_public = data.is_public;
+        }
+    } else {
+        // 无存档，默认不公开
+        $('#chk-public').prop('checked', false);
     }
 }
 window.loadCloudDesktop = loadCloudDesktop;
@@ -82,7 +94,6 @@ async function loadWorldData() {
     const grid = $('#world-grid');
     grid.html('<p>Loading...</p>');
 
-    // 关联查询 profiles 获取昵称
     const { data, error } = await supabase
         .from('desktops')
         .select('id, layout_data, os_type, likes_count, user_id, is_public, profiles(nickname)')
@@ -91,8 +102,7 @@ async function loadWorldData() {
         .limit(20);
 
     grid.empty();
-    if (error) { grid.html('<p>Error loading world.</p>'); return; }
-    if (!data || data.length === 0) { grid.html('<p>No public desktops yet.</p>'); return; }
+    if (!data || data.length === 0) { grid.html('<p>No public desktops.</p>'); return; }
 
     data.forEach(item => {
         const name = item.profiles ? item.profiles.nickname : 'User';
@@ -108,71 +118,65 @@ async function loadWorldData() {
                 </div>
             </div>
         `);
-        
-        card.click(() => {
-            enterViewMode(item);
-        });
+        card.click(() => enterViewMode(item, name));
         grid.append(card);
     });
 }
 window.loadWorldData = loadWorldData;
 
-// === 进入查看模式 ===
-function enterViewMode(desktopItem) {
-    viewingDesktopId = desktopItem.id;
+function enterViewMode(item, nickname) {
+    viewingDesktopId = item.id;
     $('#world-overlay').addClass('hidden');
     
-    // 1. 切换系统并加载数据
-    window.desktopManager.switchOS(desktopItem.os_type);
-    window.desktopManager.loadLayout(desktopItem.layout_data);
+    window.desktopManager.switchOS(item.os_type);
+    window.desktopManager.loadLayout(item.layout_data);
     
-    // 2. 界面调整
-    $('#os-tabs button').removeClass('active'); 
-    $(`#os-tabs button[data-os="${desktopItem.os_type}"]`).addClass('active');
-    $('#btn-exit-view').removeClass('hidden'); // 显示返回按钮
+    // UI 变化
+    $('#os-tabs button').removeClass('active');
+    $(`#os-tabs button[data-os="${item.os_type}"]`).addClass('active');
+    $('#btn-exit-view').removeClass('hidden');
     
-    // 3. 隐藏工具箱，显示留言
+    // 侧边栏：显示访客面板，隐藏编辑面板
+    $('#logged-view').hide();
+    $('#visitor-view').removeClass('hidden');
+    $('#visitor-target-name').text(nickname);
     $('#sidebar .toolbox').addClass('hidden');
     $('#comments-panel').removeClass('hidden');
-    loadComments(viewingDesktopId);
     
-    // 4. 禁用拖拽 (简单实现：给所有图标加 pointer-events: none 或移除 draggable)
-    $('.app-icon').draggable('disable');
+    loadComments(viewingDesktopId);
+    $('.app-icon').draggable('disable'); // 禁用拖拽
 }
 
-// 加载留言
-async function loadComments(desktopId) {
+// 留言与互动
+async function loadComments(id) {
     const list = $('#comments-list');
     list.html('Loading...');
-    const { data } = await supabase.from('comments').select('content, profiles(nickname)').eq('desktop_id', desktopId).order('created_at', {ascending:false});
-    
+    const { data } = await supabase.from('comments').select('content, profiles(nickname)').eq('desktop_id', id).order('created_at', {ascending:false});
     list.empty();
-    if(data) {
-        data.forEach(c => {
-            list.append(`<div class="comment-item"><strong>${c.profiles.nickname}:</strong> ${c.content}</div>`);
-        });
-    }
+    if(data) data.forEach(c => list.append(`<div class="comment-item"><strong>${c.profiles.nickname}:</strong> ${c.content}</div>`));
 }
 
-// 发送留言
 $('#btn-send-comment').click(async () => {
-    if(!currentUser) return alert("Please login to comment");
+    if(!currentUser) return alert("Please login");
     const content = $('#inp-comment').val();
     if(!content) return;
-    
-    const { error } = await supabase.from('comments').insert({
-        desktop_id: viewingDesktopId,
-        user_id: currentUser.id,
-        content: content
-    });
-    
-    if(!error) {
-        $('#inp-comment').val('');
-        loadComments(viewingDesktopId);
-    }
+    const { error } = await supabase.from('comments').insert({ desktop_id: viewingDesktopId, user_id: currentUser.id, content });
+    if(!error) { $('#inp-comment').val(''); loadComments(viewingDesktopId); }
 });
 
-function getOSColor(os) {
-    switch(os) { case 'windows': return '#00a8e8'; case 'macos': return '#636e72'; default: return '#333'; }
-}
+$('#btn-like').click(async () => {
+    if(!currentUser) return alert("Login first");
+    const { error } = await supabase.from('likes').insert({ user_id: currentUser.id, desktop_id: viewingDesktopId });
+    if(error) alert("Already liked?");
+    else alert("Liked!");
+});
+
+$('#btn-fav').click(async () => {
+    if(!currentUser) return alert("Login first");
+    const { error } = await supabase.from('favorites').insert({ user_id: currentUser.id, desktop_id: viewingDesktopId });
+    if(error) alert("Already in favorites?");
+    else alert("Collected!");
+});
+
+function getOSColor(os) { switch(os) { case 'windows': return '#00a8e8'; case 'macos': return '#636e72'; default: return '#333'; } }
 function t(key) { return CONFIG.i18n[navigator.language.startsWith('zh')?'zh':'en'][key] || key; }

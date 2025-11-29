@@ -1,133 +1,82 @@
 /* css/style.css */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    height: 100vh; 
-    overflow: hidden; 
-    background: #000;
+    font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; background: #111;
 }
 
-#app-container { display: flex; height: 100%; width: 100%; position: relative; }
+#app-container { display: flex; height: 100%; width: 100%; position: relative; overflow: hidden; }
 
-/* --- 侧边栏优化 --- */
+/* === 侧边栏 === */
 #sidebar {
     width: 280px;
-    background: #f5f5f5;
-    border-left: 1px solid #ccc;
-    display: flex;
-    flex-direction: column;
+    height: 100%;
+    background: #f8f9fa;
+    border-left: 1px solid #ddd;
+    display: flex; flex-direction: column;
     z-index: 200;
-    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-    transition: width 0.3s ease, transform 0.3s ease;
-    position: relative;
-    flex-shrink: 0; /* 防止被压缩 */
+    position: absolute; /* 改为绝对定位，悬浮在右侧 */
+    right: 0; top: 0;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* 折叠状态 */
+/* 折叠状态：移出屏幕 */
 #sidebar.collapsed {
-    width: 0;
-    overflow: hidden; /* 隐藏内部内容 */
-    border: none;
+    transform: translateX(100%); /* 向右移动 100% 自身宽度 */
 }
 
-/* 折叠按钮 */
+/* 切换按钮：挂在侧边栏左侧 */
 #sidebar-toggle-btn {
     position: absolute;
-    left: -30px; /* 挂在侧边栏左侧外面 */
+    left: -32px; /* 挂在外面 */
     top: 50%;
-    transform: translateY(-50%);
-    width: 30px; height: 60px;
-    background: #f5f5f5;
-    border: 1px solid #ccc;
-    border-right: none;
+    width: 32px; height: 60px;
+    background: #f8f9fa;
+    border: 1px solid #ddd; border-right: none;
     border-radius: 8px 0 0 8px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    z-index: 201;
-    color: #666;
-    box-shadow: -2px 0 3px rgba(0,0,0,0.1);
+    color: #555;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.05);
 }
-#sidebar-toggle-btn:hover { background: #e0e0e0; }
+#sidebar-toggle-btn:hover { background: #fff; color: #000; }
 
-/* 广告位 */
-.ad-slot {
-    height: 80px; background: #e0e0e0;
-    display: flex; align-items: center; justify-content: center;
-    color: #888; border-bottom: 1px solid #ddd;
-    font-size: 12px;
-}
+/* 内容区域样式 (保持不变) */
+.ad-slot { height: 80px; background: #eee; display: flex; align-items: center; justify-content: center; color: #999; border-bottom: 1px solid #ddd; }
+.world-link-btn { padding: 15px; background: linear-gradient(45deg, #6c5ce7, #a29bfe); color: white; text-align: center; font-weight: bold; cursor: pointer; }
+#user-panel { padding: 15px; background: white; border-bottom: 1px solid #eee; }
+.toolbox { flex: 1; overflow-y: auto; padding: 15px; background: #f4f6f8; }
 
-/* 按钮与面板 */
-.world-link-btn {
-    padding: 12px;
-    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-    color: white; text-align: center; font-weight: bold; cursor: pointer;
+/* 工具箱网格布局 */
+.category { margin-bottom: 20px; }
+.cat-title { font-weight: bold; margin-bottom: 10px; color: #444; border-left: 4px solid #0984e3; padding-left: 8px; }
+.cat-content { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.tool-icon {
+    background: white; border-radius: 12px; padding: 15px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: grab; border: 1px solid #eee; transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
 }
-#user-panel { padding: 15px; background: #fff; border-bottom: 1px solid #eee; }
-.user-info { font-weight: bold; margin-bottom: 5px; }
-.stats { font-size: 12px; color: #666; margin-bottom: 8px; }
-.user-actions { display: flex; gap: 5px; }
+.tool-icon:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #74b9ff; }
+.tool-icon i { font-size: 28px; }
+.tool-icon span { font-size: 12px; color: #666; }
+
+/* 通用按钮 */
 button { border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; color: white; font-size: 12px; }
 .btn-primary { background: #0984e3; }
 .btn-success { background: #00b894; flex: 1; }
 .btn-danger { background: #d63031; }
+.btn-secondary { background: #636e72; }
+.btn-close { position: absolute; top: 10px; right: 10px; background:transparent; color:#333; font-size:16px; }
 
-/* --- 工具箱大图标优化 --- */
-.toolbox { flex: 1; overflow-y: auto; padding: 10px; background: #fafafa; }
-.category { margin-bottom: 20px; }
-.cat-title { font-weight: bold; margin-bottom: 10px; color: #333; padding-left: 5px; border-left: 4px solid #0984e3; }
-
-/* 改为网格布局，一行两个 */
-.cat-content { 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 10px; 
-}
-
-.tool-icon {
-    /* 计算宽度：(100% - 间隙) / 2 */
-    width: calc(50% - 5px); 
-    aspect-ratio: 1 / 1; /* 正方形 */
-    background: white;
-    border: 1px solid #eee;
-    border-radius: 12px;
-    cursor: grab;
-    display: flex;
-    flex-direction: column; /* 图标在上，文字在下 */
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.tool-icon:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 5px 12px rgba(0,0,0,0.1); 
-    border-color: #0984e3;
-}
-.tool-icon i { font-size: 28px; color: #444; }
-.tool-icon span { font-size: 12px; color: #666; text-align: center;}
-
-/* 弹窗通用 (保持不变) */
-.overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+/* 弹窗通用 */
+.overlay { position: fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.6); z-index:1000; display:flex;justify-content:center;align-items:center;}
 .hidden { display: none !important; }
-.modal-box { background: white; padding: 25px; border-radius: 8px; width: 300px; position: relative; text-align: center; }
-.form-group input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; }
-.btn-close { position: absolute; top: 10px; right: 10px; color: #333; background: none; font-size: 18px; }
-
-/* 世界弹窗 (保持不变) */
-.world-modal { background: white; width: 80%; height: 80%; border-radius: 12px; display: flex; flex-direction: column; }
-.world-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
-#world-grid { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 20px; background: #f9f9f9; }
-.world-card { width: 180px; height: 140px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 8px; overflow:hidden; display: flex; flex-direction: column; }
-.card-preview { flex: 1; display: flex; justify-content: center; align-items: center; background: #eee; }
-.card-info { padding: 8px; font-size: 12px; }
-
-/* 手机端适配 */
-@media (max-width: 768px) {
-    #sidebar { position: fixed; right: 0; top: 0; bottom: 0; width: 85%; transform: translateX(100%); }
-    #sidebar.active { transform: translateX(0); width: 85%; }
-    #sidebar.collapsed { width: 85%; transform: translateX(100%); } /* 手机上折叠就是隐藏 */
-    #sidebar-toggle-btn { display: flex; } /* 确保按钮显示 */
-}
+.modal-box { background:white; padding:30px; border-radius:8px; width:300px; position:relative; text-align:center; }
+.world-modal { width:80%; height:80%; background:white; border-radius:10px; display:flex; flex-direction:column; }
+.world-header { padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; }
+#world-grid { flex:1; padding:20px; overflow-y:auto; display:flex; flex-wrap:wrap; gap:20px; background:#fafafa; }
+.world-card { width:160px; height:130px; background:white; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); overflow:hidden; display:flex; flex-direction:column; }
+.card-preview { flex:1; display:flex; justify-content:center; align-items:center; background:#eee; }
+.card-info { padding:8px; font-size:12px; }

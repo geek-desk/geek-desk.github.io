@@ -1,290 +1,103 @@
-/* 全局重置 */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body, html { 
-    width: 100%; 
-    height: 100%; 
-    overflow: hidden; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background: #222; 
-}
-
-#main-app {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* --- 顶部栏样式 --- */
-#top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    background-color: #1e1e1e;
-    color: white;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.app-title { font-size: 1.5em; font-weight: 300; margin-right: 20px; }
-
-#system-tabs { display: flex; gap: 10px; }
-
-.system-tab {
-    padding: 8px 15px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.2s, box-shadow 0.2s;
-    font-weight: bold;
-    color: #ccc;
-}
-
-.system-tab:hover { background-color: #3a3a3a; }
-.system-tab.active { 
-    background-color: #0078d4; 
-    color: white; 
-    box-shadow: 0 0 5px rgba(0, 120, 212, 0.5);
-}
-
-/* --- 分栏容器 (左右布局) --- */
-#split-container {
-    flex-grow: 1;
-    display: flex;
-    overflow: hidden;
-}
-
-/* --- 左侧: 桌面区域 --- */
-#desktop-area {
-    flex: 3; 
-    position: relative;
-    overflow: hidden;
-    min-width: 500px; 
-    transition: all 0.3s ease;
-}
-
-#desktop-background {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    background-size: cover;
-    background-position: center;
-    transition: background-image 0.5s ease;
-}
-
-#icon-area {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    padding-top: 10px;
-    padding-left: 10px;
-}
-
-/* --- 手机模式下的桌面模拟 (已修复比例) --- */
-#desktop-area.mobile-mode {
-    width: 380px; 
-    /* 关键修复：使用 aspect-ratio 确保 9:16 的瘦长比例 */
-    aspect-ratio: 9 / 16; 
-    
-    height: auto; 
-    max-height: calc(100% - 40px); 
-    
-    margin: 20px auto; 
-    border: 10px solid #000;
-    border-radius: 40px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
-    flex: none; 
-}
-
-/* --- 图标样式 (用于桌面) --- */
-.desktop-icon {
-    position: absolute;
-    width: 80px;
-    height: 90px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 5px;
-    cursor: grab;
-    user-select: none;
-    transition: background-color 0.1s;
-}
-.desktop-icon img { width: 48px; height: 48px; margin-bottom: 5px; }
-.desktop-icon span { 
-    color: white; 
-    font-size: 12px; 
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6); 
-    word-break: break-all;
-    max-height: 24px;
-    overflow: hidden;
-}
-
-.desktop-icon.selected {
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 5px;
-}
-
-/* --- 手机分屏指示器 --- */
-#screen-indicator {
-    position: absolute;
-    bottom: 55px; 
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 8px;
-    z-index: 20;
-    display: none; 
-}
-#screen-indicator.visible { display: flex; }
-.screen-dot {
-    width: 8px;
-    height: 8px;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    cursor: pointer;
-}
-.screen-dot.active { background-color: white; }
-
-/* --- 任务栏/Dock 样式 (Win 11 风格) --- */
-#system-dock {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 48px; 
-    
-    /* Win 11 效果 */
-    background-color: rgba(255, 255, 255, 0.1); 
-    backdrop-filter: blur(8px);
-    border-top: 1px solid rgba(255, 255, 255, 0.2); 
-    
-    z-index: 50;
-    /* 内容居中 */
-    display: flex;
-    justify-content: center; 
-    align-items: center;
-}
-
-/* 手机模式下 Dock 居于模拟框底部 */
-#desktop-area.mobile-mode #system-dock {
-    border-radius: 0 0 30px 30px; 
-    height: 60px;
-    background-color: rgba(0, 0, 0, 0.5); 
-}
-
-
-/* --- 右侧: 工具栏侧边栏 --- */
-#toolbox-sidebar {
-    flex: 1; 
+/* --- 替换原有的 #toolbox-sidebar 规则 --- */
+#right-panel-container {
+    flex: 1; /* 占据剩余空间 */
     min-width: 250px;
     max-width: 350px;
     background-color: #f8f8f8;
-    padding: 15px;
-    overflow-y: auto;
+    overflow-y: auto; /* 允许整个右侧容器滚动 */
     border-left: 1px solid #ddd;
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* 关键：使内部元素垂直堆叠 */
 }
 
-#sidebar-categories {
+/* 重新定义 #toolbox-sidebar (现在作为 #right-panel-container 的一个子元素) */
+#toolbox-sidebar {
+    flex-grow: 1; /* 工具栏占据主要空间，向下延伸 */
+    padding: 15px;
+    overflow-y: auto; /* 允许工具栏内部滚动 (如果图标过多) */
+}
+
+/* --- 新增 AdSense 预留位样式 --- */
+#adsense-area {
+    height: 100px; /* 预留固定高度 */
+    min-height: 100px;
+    background-color: #e0e0e0;
+    text-align: center;
+    padding: 10px;
+    font-size: 0.9em;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 15px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* 防止被挤压或扩展 */
+    color: #555;
 }
 
-#sidebar-categories button {
-    padding: 6px 10px;
+/* --- 新增 用户面板样式 --- */
+#user-panel {
+    padding: 15px;
+    background-color: #ffffff;
+    border-top: 1px solid #eee;
+    flex-shrink: 0; /* 防止被挤压 */
+}
+
+#user-panel h3 {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.user-stats p {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.control-section {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#visibility-toggle {
+    padding: 5px 10px;
     border: 1px solid #ccc;
-    background-color: white;
+    background-color: #f0f0f0;
     cursor: pointer;
     border-radius: 4px;
-    transition: background-color 0.2s;
-    font-size: 0.9em;
+    transition: all 0.2s;
+}
+/* 公开状态样式 */
+#visibility-toggle[data-status="public"] {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
 }
 
-#sidebar-categories button.active {
+.action-btn {
+    width: 100%;
+    padding: 10px;
     background-color: #0078d4;
     color: white;
-    border-color: #0078d4;
-}
-
-#sidebar-icon-list {
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-/* --- 侧边栏图标样式 --- */
-.sidebar-icon {
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    width: 80px;
-    margin: 5px 0;
-    cursor: grab; 
-    padding: 5px;
-    border-radius: 5px;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
 }
-
-.sidebar-icon:hover { background-color: #eee; }
-
-.sidebar-icon img { width: 32px; height: 32px; }
-
-.sidebar-icon span {
-    font-size: 11px;
-    color: #333;
-    margin-top: 5px;
-    word-break: break-all;
+.action-btn:hover {
+    background-color: #005bb5;
 }
-
-/* --- 确保 SVG 图标显示其自带的彩色 (修复图标不彩色的问题) --- */
-.desktop-icon img, .sidebar-icon img {
-    color: initial; 
-    fill: initial;
-}
-
-
-/* --- 移动端响应式 (Media Queries) --- */
-@media (max-width: 900px) {
-    /* 平板或小型桌面 */
-    #desktop-area { min-width: 400px; }
-    #toolbox-sidebar { min-width: 200px; }
-}
-
-@media (max-width: 768px) {
-    /* 手机端：堆叠布局 */
-    #split-container {
-        flex-direction: column; 
-    }
-
-    #top-bar { padding: 5px 10px; }
-    .app-title { display: none; } 
-
-    #desktop-area {
-        height: 75vh; 
-        min-width: 100%;
-        margin: 0;
-        border: none;
-        border-radius: 0;
-    }
-    
-    /* 手机模式在小屏上全屏显示 */
-    #desktop-area.mobile-mode {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        border: none;
-        border-radius: 0;
-        aspect-ratio: unset; 
-    }
-
-    #toolbox-sidebar {
-        height: 25vh; 
-        max-width: none;
-        border-left: none;
-        border-top: 1px solid #ddd;
-    }
+.action-btn img {
+    width: 20px;
+    height: 20px;
+    /* 确保 SVG 图标在蓝色背景上显示为白色 */
+    filter: invert(100%); 
 }

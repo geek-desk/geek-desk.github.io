@@ -1,3 +1,6 @@
+// js/drag-handler.js
+// 图标拖放处理和位置保存
+
 $(document).ready(function() {
     let isDragging = false;
     let $draggedIcon = null;
@@ -10,11 +13,14 @@ $(document).ready(function() {
         isDragging = true;
         $draggedIcon = $(this);
         
+        // 计算鼠标点击点与图标左上角的偏移量
         offsetX = e.clientX - $draggedIcon.offset().left;
         offsetY = e.clientY - $draggedIcon.offset().top;
         
-        // 提升 z-index
-        $draggedIcon.css('z-index', 100); 
+        $draggedIcon.css({
+            'z-index': 100, 
+            'cursor': 'grabbing'
+        }); 
     });
 
     // 鼠标移动事件：拖动中
@@ -23,37 +29,57 @@ $(document).ready(function() {
         
         e.preventDefault(); 
 
+        // 计算新位置
         let newX = e.clientX - offsetX;
         let newY = e.clientY - offsetY;
 
-        // 边界检查
+        // 边界检查：确保图标不超出 #icon-area 范围
         const $iconArea = $('#icon-area');
+        const iconAreaOffset = $iconArea.offset();
         const iconAreaWidth = $iconArea.width();
         const iconAreaHeight = $iconArea.height();
         const iconWidth = $draggedIcon.outerWidth();
         const iconHeight = $draggedIcon.outerHeight();
         
-        newX = Math.max(0, Math.min(newX, iconAreaWidth - iconWidth));
-        newY = Math.max(0, Math.min(newY, iconAreaHeight - iconHeight));
+        // 相对 #icon-area 的坐标
+        let relativeX = newX - iconAreaOffset.left;
+        let relativeY = newY - iconAreaOffset.top;
 
-        // 更新图标位置
+        relativeX = Math.max(0, Math.min(relativeX, iconAreaWidth - iconWidth));
+        relativeY = Math.max(0, Math.min(relativeY, iconAreaHeight - iconHeight));
+
         $draggedIcon.css({
-            left: newX + 'px',
-            top: newY + 'px'
+            left: relativeX + 'px',
+            top: relativeY + 'px'
         });
     });
 
-    // 鼠标松开事件：结束拖动
+    // 鼠标松开事件：结束拖动并保存位置
     $(document).on('mouseup', function() {
         if (isDragging && $draggedIcon) {
             isDragging = false;
-            $draggedIcon.css('z-index', ''); 
-
-            // 在这里添加保存位置到 Supabase 的代码 (后续步骤)
+            $draggedIcon.css({'z-index': '', 'cursor': 'grab'}); 
+            
+            // 获取最终位置
             const finalX = parseInt($draggedIcon.css('left'));
             const finalY = parseInt($draggedIcon.css('top'));
-            
-            console.log(`Icon ${$draggedIcon.attr('id')} moved to (${finalX}, ${finalY}). Needs to be saved to Supabase.`);
+            const iconId = $draggedIcon.data('id');
+
+            // === 核心：更新 userDesktops 状态并保存 ===
+            if (userDesktops[currentSystemId]) {
+                const screenIcons = userDesktops[currentSystemId].screens[currentScreenIndex];
+                
+                // 查找并更新图标在数据中的位置
+                const iconIndex = screenIcons.findIndex(icon => icon.id === iconId);
+                
+                if (iconIndex !== -1) {
+                    screenIcons[iconIndex].x = finalX;
+                    screenIcons[iconIndex].y = finalY;
+                    saveUserDesktops();
+                    console.log(`Icon ${iconId} position updated and saved.`);
+                }
+            }
+            // ============================================
         }
         $draggedIcon = null;
     });

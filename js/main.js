@@ -1,138 +1,23 @@
-// =======================================================================
-// !!! 必须替换 !!! 请用你的真实 Supabase URL 和 Anon Key 替换以下占位符
-// =======================================================================
-const SUPABASE_URL = 'https://rjhmezzyjntpcvlycece.supabase.co'; 
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqaG1lenp5am50cGN2bHljZWNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDAzMDIsImV4cCI6MjA3OTk3NjMwMn0.pi5M3kcu-CaJY0ryry8phi9E-SQdRKHGmxsJGIckANA';
+// 初始化Supabase
+const supabase = supabase.createClient('https://rjhmezzyjntpcvlycece.supabase.co', 'supabase-annon-key');
 
-// --- 桌面图标数据 ---
-const initialIcons = [
-    { id: 'icon-my-pc', name: '此电脑', type: 'system', icon: 'https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/device-desktop-24.svg', x: 20, y: 20 },
-    { id: 'icon-recycle-bin', name: '回收站', type: 'system', icon: 'https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/trash-24.svg', x: 20, y: 120 }
-];
-
-// 函数：创建图标的 HTML 元素 (保持不变)
-function createIconElement(iconData) {
-    const $icon = $(`
-        <div class="desktop-icon" id="${iconData.id}" data-x="${iconData.x}" data-y="${iconData.y}">
-            <img src="${iconData.icon}" alt="${iconData.name}">
-            <span>${iconData.name}</span>
-        </div>
-    `);
-    
-    $icon.css({
-        top: iconData.y + 'px',
-        left: iconData.x + 'px'
-    });
-    
-    return $icon;
+// 页面加载时
+window.onload = () => {
+    checkLogin();
 }
 
-
-$(document).ready(function() {
-    // === 关键修复: 在这里初始化 Supabase 客户端 ===
-    // 确保全局的 'supabase' 对象已加载并可用
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    // =============================================
-    
-    console.log("桌面模拟器已启动！");
-    
-    const $iconArea = $('#icon-area');
-    const $authModal = $('#auth-modal');
-
-    // 函数：处理登录/注册结果 (内部函数，可以使用 supabaseClient)
-    function handleAuthResponse(error, session) {
-        const $message = $('#auth-message');
-        $message.text('');
-        
-        if (error) {
-            $message.text(`认证失败: ${error.message}`);
-            console.error('认证错误:', error);
-        } else if (session) {
-            $authModal.addClass('modal-hidden');
-            alert(`登录成功！欢迎回来，用户ID: ${session.user.id}`);
-        } else {
-             $message.text('注册成功! 请检查你的邮箱进行验证。');
-        }
+// 检查用户登录状态
+function checkLogin() {
+    const user = supabase.auth.user();
+    if (user) {
+        loadDesktop(user.id);
+    } else {
+        window.location.href = 'login.html'; // 没登录就跳转到登录页面
     }
-    
-    // 检查当前会话状态
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-            $authModal.addClass('modal-hidden');
-            console.log('当前用户已登录:', session.user);
-        } else {
-            $authModal.removeClass('modal-hidden');
-        }
-    });
+}
 
-    // 1. 加载初始图标
-    initialIcons.forEach(icon => {
-        const $iconElement = createIconElement(icon);
-        $iconArea.append($iconElement);
-    });
-
-    // 2. 图标交互：点击选中/取消选中
-    $iconArea.on('click', '.desktop-icon', function(event) {
-        event.stopPropagation(); 
-        $('.desktop-icon').removeClass('selected');
-        $(this).addClass('selected');
-    });
-
-    // 点击桌面背景时，取消所有选中状态
-    $('#desktop-background').on('click', function() {
-        $('.desktop-icon').removeClass('selected');
-    });
-    
-    // --- 3. Supabase 认证事件处理 ---
-
-    // 登录按钮点击事件
-    $('#login-btn').on('click', async function() {
-        const email = $('#auth-email').val();
-        const password = $('#auth-password').val();
-        
-        const { data: { session }, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
-        handleAuthResponse(error, session);
-    });
-
-    // 注册按钮点击事件
-    $('#signup-btn').on('click', async function() {
-        const email = $('#auth-email').val();
-        const password = $('#auth-password').val();
-        
-        const { error } = await supabaseClient.auth.signUp({
-            email: email,
-            password: password,
-        });
-        
-        if (error) {
-             handleAuthResponse(error, null);
-        } else {
-             handleAuthResponse(null, null); 
-        }
-    });
-
-    // 4. 登出事件处理
-    $('#logout-btn').on('click', async function() {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) {
-            alert('登出失败: ' + error.message);
-        } else {
-            alert('您已成功登出。');
-        }
-    });
-
-
-    // 5. 实时监听认证状态变化 (处理登出后模态框的显示)
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
-            console.log('用户已登出或会话无效');
-            $authModal.removeClass('modal-hidden');
-        } else if (event === 'SIGNED_IN') {
-             console.log('用户已登录');
-             $authModal.addClass('modal-hidden');
-        }
-    });
-});
+// 登出
+async function logOut() {
+    await supabase.auth.signOut();
+    window.location.href = 'login.html'; // 登出后跳转到登录页面
+}

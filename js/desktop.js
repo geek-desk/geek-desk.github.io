@@ -13,6 +13,7 @@ class DesktopManager {
         this.initContextMenu();
         this.initFolderWindow();
         
+        // 壁纸点击
         $(document).on('click', '.wallpaper-item', function() {
             const url = $(this).data('url');
             $('#desktop-area').css('background-image', `url(${url})`);
@@ -26,17 +27,26 @@ class DesktopManager {
         this.saveToMemory(this.currentOS);
         this.currentOS = osName;
 
+        // 1. 先应用 Config 中的默认壁纸 (这是“闪”的那一下，现在它是正确的)
         const bg = CONFIG.wallpapers[osName] || 'none';
         $('#desktop-area').removeClass().addClass(`os-${osName}`).css('background-image', bg);
         
         this.updateSystemUI(osName);
-        this.renderSidebar(osName); // 渲染侧边栏
+        this.renderSidebar(osName);
         $('#desktop-stage').empty();
         
+        // 2. 加载缓存数据
         const cached = this.cachedLayouts[osName];
         if (cached && cached.icons) {
             this.folderData = cached.folders || {};
-            if (cached.customWallpaper) $('#desktop-area').css('background-image', cached.customWallpaper);
+            
+            // === 修复核心：增加校验 ===
+            // 只有当缓存里的壁纸包含 "url" 字符时，才覆盖默认壁纸
+            // 这样如果是 "none" 或者 undefined，就会保留上面的默认壁纸
+            if (cached.customWallpaper && cached.customWallpaper.indexOf('url') !== -1) {
+                $('#desktop-area').css('background-image', cached.customWallpaper);
+            }
+            
             this.renderIcons(cached.icons);
         } else {
             this.folderData = {};
@@ -48,7 +58,6 @@ class DesktopManager {
         }
     }
 
-    // === 修复后的侧边栏渲染 (使用 window.t) ===
     renderSidebar(os) {
         const container = $('#dynamic-toolbox');
         container.empty();
@@ -62,12 +71,10 @@ class DesktopManager {
             if (cat.items && Array.isArray(cat.items)) {
                 if (cat.type === 'wallpaper') {
                     cat.items.forEach(wp => itemsHtml += `<div class="wallpaper-item" style="background-image:url(${wp.img})" data-url="${wp.url}"></div>`);
-                    // 确保 t 函数存在
                     const title = window.t ? window.t('wallpaper') : 'Wallpapers';
                     container.append(`<div class="category"><div class="cat-title">${title}</div><div class="cat-content wallpapers">${itemsHtml}</div></div>`);
                 } else {
                     cat.items.forEach(tool => itemsHtml += `<div class="tool-icon" data-name="${tool.name}" data-icon="${tool.icon}" data-color="${tool.color}"><i class="${tool.icon}" style="color:${tool.color}"></i><span>${tool.name}</span></div>`);
-                    // 使用 t 翻译分类标题 (如 office -> 办公)
                     const title = window.t ? window.t(cat.title) : cat.title;
                     container.append(`<div class="category ${index>1?'collapsed':''}"><div class="cat-title">${title}</div><div class="cat-content">${itemsHtml}</div></div>`);
                 }
@@ -225,7 +232,15 @@ class DesktopManager {
         this.cachedLayouts[this.currentOS] = data;
         this.folderData = data.folders || {};
         $('#desktop-stage').empty();
-        if(data.customWallpaper) $('#desktop-area').css('background-image', data.customWallpaper);
+        
+        // === 修复核心：同上，增加校验 ===
+        if(data.customWallpaper && data.customWallpaper.indexOf('url') !== -1) {
+            $('#desktop-area').css('background-image', data.customWallpaper);
+        } else {
+            // 如果存档里的壁纸坏了，恢复默认
+            $('#desktop-area').css('background-image', CONFIG.wallpapers[this.currentOS]);
+        }
+        
         if(data.icons) this.renderIcons(data.icons);
     }
     

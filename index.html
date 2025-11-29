@@ -1,59 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desktop Share Simulator</title>
-    
-    <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/mark-github-24.svg">
-
-    <link rel="stylesheet" href="/css/style.css">
-    
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-    
-    <div id="main-app">
-        
-        <div id="top-bar">
-            <h1 class="app-title">DesktopShare</h1>
-            <div id="system-tabs">
-                </div>
-            <button id="world-btn" class="app-btn">World</button>
-        </div>
-
-        <div id="split-container">
-            
-            <div id="desktop-area">
-                
-                <div id="desktop-background"></div>
-
-                <div id="icon-area">
-                    </div>
-
-                <div id="system-dock">
-                    </div>
-                
-                <div id="screen-indicator"></div>
+<div id="split-container">
+    <div id="desktop-area">
+        <div id="desktop-background"></div>
+        <div id="icon-area"></div>
+        <div id="screen-indicator"></div>
+        <div id="system-dock">
             </div>
-
-            <div id="toolbox-sidebar">
-                <h2>App Library</h2>
-                <div id="sidebar-categories">
-                    </div>
-                <div id="sidebar-icon-list">
-                    </div>
-            </div>
-        </div>
     </div>
     
-    <div id="auth-modal" class="modal-hidden">
+    <div id="right-panel-container">
+        
+        <div id="toolbox-sidebar">
+            <div id="sidebar-categories">
+                </div>
+            <div id="sidebar-icon-list">
+                </div>
         </div>
 
-    <script src="/js/data.js"></script>
-    <script src="/js/desktop.js"></script>
-    <script src="/js/core.js"></script> 
-    <script src="/js/drag-handler.js"></script> 
-</body>
-</html>
+        <div id="adsense-area">
+            <p>【AdSense 广告位：高 100px】</p>
+        </div>
+
+        <div id="user-panel">
+            <h3>👤 我的桌面</h3>
+            
+            <div class="user-stats">
+                <p><span id="stat-likes">0</span> ❤️ 点赞 | <span id="stat-favs">0</span> ⭐ 收藏</p>
+            </div>
+            
+            <div class="control-section">
+                <label for="visibility-toggle">🔒 桌面可见性：</label>
+                <button id="visibility-toggle" data-status="private">私有</button>
+            </div>
+
+            <button id="world-link-btn" class="action-btn">
+                <img src="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/svg/solid/bxs-planet.svg" alt="World Icon">
+                世界页面 (查看公开桌面)
+            </button>
+        </div>
+    </div>
+</div>

@@ -2,12 +2,11 @@
 $(document).ready(function() {
     console.log("App Initialized.");
     
-    // 初始化管理器
+    // 1. 启动
     window.desktopManager = new DesktopManager();
-    // 初始化 Supabase
     initAuth();
 
-    // 切换系统
+    // 2. 切换系统
     $('#os-tabs button').click(function() {
         $('#os-tabs button').removeClass('active');
         $(this).addClass('active');
@@ -15,10 +14,11 @@ $(document).ready(function() {
         window.desktopManager.switchOS(os);
     });
 
-    // 侧边栏折叠
+    // 3. 侧边栏折叠 (箭头按钮)
     $('#sidebar-toggle-btn').click(function() {
         $('#sidebar').toggleClass('collapsed');
         const icon = $(this).find('i');
+        // 切换箭头方向
         if ($('#sidebar').hasClass('collapsed')) {
             icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
         } else {
@@ -26,16 +26,14 @@ $(document).ready(function() {
         }
     });
 
-    // 弹窗逻辑
+    // 4. 弹窗控制
     $('#btn-login-modal').click(() => $('#modal-overlay').removeClass('hidden'));
     $('#btn-close-modal').click(() => $('#modal-overlay').addClass('hidden'));
     
-    // 保存逻辑 (调用 auth.js 中的 saveDesktopData)
     $('#btn-save').click(() => {
         if(window.saveDesktopData) window.saveDesktopData();
     });
 
-    // 世界逻辑 (调用 auth.js 中的 loadWorldData)
     $('#btn-open-world').click(() => {
         if(window.loadWorldData) window.loadWorldData();
     });

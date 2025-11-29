@@ -1,16 +1,19 @@
 // js/drag-handler.js
-// 图标拖放处理和位置保存
+// 图标拖放处理和位置保存 (新增：侧边栏拖动到桌面逻辑)
 
 $(document).ready(function() {
-    let isDragging = false;
+    let isDraggingExisting = false;
+    let isDraggingNew = false;
     let $draggedIcon = null;
     let offsetX, offsetY;
 
-    // 鼠标按下事件：开始拖动
+    // --- 现有图标拖动逻辑 (桌面 -> 桌面) ---
+
+    // 鼠标按下事件：开始拖动现有图标
     $('#icon-area').on('mousedown', '.desktop-icon', function(e) {
         if (e.button !== 0) return;
         
-        isDragging = true;
+        isDraggingExisting = true;
         $draggedIcon = $(this);
         
         // 计算鼠标点击点与图标左上角的偏移量
@@ -21,19 +24,18 @@ $(document).ready(function() {
             'z-index': 100, 
             'cursor': 'grabbing'
         }); 
+        
+        // 阻止事件冒泡，防止触发桌面点击取消选中
+        e.stopPropagation(); 
     });
 
-    // 鼠标移动事件：拖动中
+    // 鼠标移动事件：拖动中 (适用于现有图标)
     $(document).on('mousemove', function(e) {
-        if (!isDragging || !$draggedIcon) return;
+        if (!isDraggingExisting || !$draggedIcon) return;
         
         e.preventDefault(); 
 
-        // 计算新位置
-        let newX = e.clientX - offsetX;
-        let newY = e.clientY - offsetY;
-
-        // 边界检查：确保图标不超出 #icon-area 范围
+        // 计算新位置 (边界检查)
         const $iconArea = $('#icon-area');
         const iconAreaOffset = $iconArea.offset();
         const iconAreaWidth = $iconArea.width();
@@ -41,10 +43,14 @@ $(document).ready(function() {
         const iconWidth = $draggedIcon.outerWidth();
         const iconHeight = $draggedIcon.outerHeight();
         
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
+
         // 相对 #icon-area 的坐标
         let relativeX = newX - iconAreaOffset.left;
         let relativeY = newY - iconAreaOffset.top;
 
+        // 边界限制
         relativeX = Math.max(0, Math.min(relativeX, iconAreaWidth - iconWidth));
         relativeY = Math.max(0, Math.min(relativeY, iconAreaHeight - iconHeight));
 
@@ -54,10 +60,10 @@ $(document).ready(function() {
         });
     });
 
-    // 鼠标松开事件：结束拖动并保存位置
+    // 鼠标松开事件：结束拖动并保存位置 (适用于现有图标)
     $(document).on('mouseup', function() {
-        if (isDragging && $draggedIcon) {
-            isDragging = false;
+        if (isDraggingExisting && $draggedIcon) {
+            isDraggingExisting = false;
             $draggedIcon.css({'z-index': '', 'cursor': 'grab'}); 
             
             // 获取最终位置
@@ -65,11 +71,9 @@ $(document).ready(function() {
             const finalY = parseInt($draggedIcon.css('top'));
             const iconId = $draggedIcon.data('id');
 
-            // === 核心：更新 userDesktops 状态并保存 ===
+            // 更新 userDesktops 状态并保存
             if (userDesktops[currentSystemId]) {
                 const screenIcons = userDesktops[currentSystemId].screens[currentScreenIndex];
-                
-                // 查找并更新图标在数据中的位置
                 const iconIndex = screenIcons.findIndex(icon => icon.id === iconId);
                 
                 if (iconIndex !== -1) {
@@ -79,8 +83,82 @@ $(document).ready(function() {
                     console.log(`Icon ${iconId} position updated and saved.`);
                 }
             }
-            // ============================================
         }
         $draggedIcon = null;
+    });
+
+    // --- 新图标拖动逻辑 (侧边栏 -> 桌面) ---
+
+    // 1. 侧边栏图标 dragstart 事件：存储应用ID
+    $('#toolbox-sidebar').on('dragstart', '.sidebar-icon', function(e) {
+        const dataTransfer = e.originalEvent.dataTransfer;
+        const appID = $(this).data('app-id');
+        
+        // 将应用 ID 存储在拖动数据中
+        dataTransfer.setData('text/plain', appID);
+        dataTransfer.effectAllowed = "copy";
+        
+        isDraggingNew = true; // 标记正在拖动新图标
+    });
+    
+    // 2. 桌面区域 dragover 事件：允许放下
+    $('#desktop-area').on('dragover', function(e) {
+        e.preventDefault(); 
+        e.originalEvent.dataTransfer.dropEffect = "copy"; 
+    });
+
+    // 3. 桌面区域 drop 事件：创建新图标
+    $('#desktop-area').on('drop', function(e) {
+        e.preventDefault();
+        
+        const dataTransfer = e.originalEvent.dataTransfer;
+        const appID = dataTransfer.getData('text/plain');
+
+        if (appID && isDraggingNew && userDesktops[currentSystemId]) {
+            const appInfo = APP_LIST.find(app => app.id === appID);
+            if (!appInfo) return; 
+
+            const $iconArea = $('#icon-area');
+            const iconAreaOffset = $iconArea.offset();
+            
+            // 计算放置位置（相对桌面区域）
+            let dropX = e.clientX - iconAreaOffset.left;
+            let dropY = e.clientY - iconAreaOffset.top;
+            
+            // 考虑图标自身的宽度/高度，使鼠标落在图标中心附近（可选的微调）
+            dropX -= 40; 
+            dropY -= 45; 
+
+            // 边界限制（重新应用，确保图标不会被拖出桌面）
+            const iconWidth = 80;
+            const iconHeight = 90;
+            const iconAreaWidth = $iconArea.width();
+            const iconAreaHeight = $iconArea.height();
+
+            dropX = Math.max(0, Math.min(dropX, iconAreaWidth - iconWidth));
+            dropY = Math.max(0, Math.min(dropY, iconAreaHeight - iconHeight));
+
+            
+            // 创建新的图标数据结构
+            const newIconData = {
+                id: appID,
+                name: appInfo.name, 
+                type: 'app', 
+                x: dropX, 
+                y: dropY,
+                is_folder: false
+            };
+
+            // 1. 更新数据状态
+            userDesktops[currentSystemId].screens[currentScreenIndex].push(newIconData);
+            saveUserDesktops();
+            
+            // 2. 重新渲染桌面以显示新图标
+            renderDesktop(currentSystemId, currentScreenIndex);
+            
+            console.log(`New icon ${appID} dropped and saved.`);
+        }
+        
+        isDraggingNew = false;
     });
 });

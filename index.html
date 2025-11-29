@@ -1,41 +1,75 @@
-<div id="split-container">
-    <div id="desktop-area">
-        <div id="desktop-background"></div>
-        <div id="icon-area"></div>
-        <div id="screen-indicator"></div>
-        <div id="system-dock">
-            </div>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-System Desktop Simulator</title>
     
-    <div id="right-panel-container">
+    <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+
+    <div id="main-app">
         
-        <div id="toolbox-sidebar">
-            <div id="sidebar-categories">
+        <div id="top-bar">
+            <span class="app-title">Multi-System Sim</span>
+            <div id="system-tabs">
                 </div>
-            <div id="sidebar-icon-list">
-                </div>
+            <div class="user-profile">⚙️</div>
         </div>
 
-        <div id="adsense-area">
-            <p>【AdSense 广告位：高 100px】</p>
-        </div>
-
-        <div id="user-panel">
-            <h3>👤 我的桌面</h3>
+        <div id="split-container">
             
-            <div class="user-stats">
-                <p><span id="stat-likes">0</span> ❤️ 点赞 | <span id="stat-favs">0</span> ⭐ 收藏</p>
+            <div id="desktop-area">
+                <div id="desktop-background"></div>
+                <div id="icon-area">
+                    </div>
+                <div id="screen-indicator"></div>
+                <div id="system-dock">
+                    </div>
             </div>
             
-            <div class="control-section">
-                <label for="visibility-toggle">🔒 桌面可见性：</label>
-                <button id="visibility-toggle" data-status="private">私有</button>
-            </div>
+            <div id="right-panel-container">
+                
+                <div id="toolbox-sidebar">
+                    <div id="sidebar-categories">
+                        </div>
+                    <div id="sidebar-icon-list">
+                        </div>
+                </div>
 
-            <button id="world-link-btn" class="action-btn">
-                <img src="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/svg/solid/bxs-planet.svg" alt="World Icon">
-                世界页面 (查看公开桌面)
-            </button>
+                <div id="adsense-area">
+                    <p>[AdSense Banner Area: 100px Height]</p>
+                </div>
+
+                <div id="user-panel">
+                    <h3>👤 My Desktop</h3>
+                    
+                    <div class="user-stats">
+                        <p>
+                            <span id="stat-likes">0</span> ❤️ Likes | 
+                            <span id="stat-favs">0</span> ⭐ Favorites
+                        </p>
+                    </div>
+                    
+                    <div class="control-section">
+                        <label for="visibility-toggle">🔒 Desktop Visibility:</label>
+                        <button id="visibility-toggle" data-status="private">Private</button>
+                    </div>
+
+                    <button id="world-link-btn" class="action-btn">
+                        <img src="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/svg/solid/bxs-planet.svg" alt="World Icon">
+                        World Page (View Public Desktops)
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <script src="js/data.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/drag-handler.js"></script>
+</body>
+</html>

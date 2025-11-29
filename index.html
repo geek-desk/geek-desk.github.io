@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Win11 桌面分享游戏 - 我的桌面</title>
+    <title>Desktop Share Simulator</title>
     
+    <link rel="icon" type="image/svg+xml" href="https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/mark-github-24.svg">
+
     <link rel="stylesheet" href="/css/style.css">
     
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -12,49 +14,45 @@
 </head>
 <body>
     
-    <div id="desktop-container">
-        <div id="desktop-background"></div>
-
-        <div id="icon-area">
-            </div>
+    <div id="main-app">
         
-        <div id="taskbar">
-            <div class="taskbar-center">
-                <button class="taskbar-btn start-btn" title="开始">
-                    <img src="https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/mark-github-24.svg" alt="Start">
-                </button>
-                <button class="taskbar-btn search-btn" title="搜索">
-                    <img src="https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/search-24.svg" alt="Search">
-                </button>
-                <div class="taskbar-app-placeholder"></div>
-            </div>
-            <div class="taskbar-right">
-                <button class="taskbar-btn logout-btn" id="logout-btn" title="登出">
-                    <img src="https://cdn.jsdelivr.net/npm/@primer/octicons@19.8.0/build/svg/sign-out-16.svg" alt="Logout">
-                </button>
-                
-                <div class="system-icons">
-                    <span>15:10</span>
+        <div id="top-bar">
+            <div id="system-tabs">
                 </div>
-            </div>
+            <button id="world-btn" class="app-btn">World</button>
         </div>
 
-        <div id="auth-modal" class="modal-hidden">
-            <div class="auth-box">
-                <h2>用户登录/注册</h2>
-                <input type="email" id="auth-email" placeholder="邮箱">
-                <input type="password" id="auth-password" placeholder="密码">
-                <p id="auth-message" class="error-msg"></p>
-                <button id="login-btn">登录</button>
-                <button id="signup-btn">注册</button>
+        <div id="split-container">
+            
+            <div id="desktop-area">
+                
+                <div id="desktop-background"></div>
+
+                <div id="icon-area">
+                    </div>
+
+                <div id="system-dock">
+                    </div>
+                
+                <div id="screen-indicator"></div>
+            </div>
+
+            <div id="toolbox-sidebar">
+                <h2>App Library</h2>
+                <div id="sidebar-categories">
+                    </div>
+                <div id="sidebar-icon-list">
+                    </div>
             </div>
         </div>
-        
     </div>
     
-    <script src="/js/drag-handler.js"></script>
-    <script src="/js/main.js"></script>
+    <div id="auth-modal" class="modal-hidden">
+        </div>
+
+    <script src="/js/data.js"></script>
+    <script src="/js/desktop.js"></script>
+    <script src="/js/core.js"></script> 
+    <script src="/js/drag-handler.js"></script> 
 </body>
-
 </html>
-

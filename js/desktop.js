@@ -9,74 +9,44 @@ class DesktopManager {
     init() {
         this.folderData = {};
         this.currentOpenFolderId = null;
-
         this.initDragDrop();
-        this.initContextMenu();
+        this.initContextMenu(); // 确保这行存在！
         this.initFolderWindow();
-        
-        // 启动
         this.switchOS('windows');
-
-        // 侧边栏事件
-        $(document).on('click', '.cat-title', function() {
-            $(this).parent().toggleClass('collapsed');
-        });
+        $(document).on('click', '.cat-title', function() { $(this).parent().toggleClass('collapsed'); });
     }
 
     switchOS(osName) {
         this.saveToMemory(this.currentOS);
         this.currentOS = osName;
-
         $('#desktop-area').removeClass().addClass(`os-${osName}`).css('background-image', CONFIG.wallpapers[osName]);
         this.updateSystemUI(osName);
         this.renderSidebar(osName);
-
         $('#desktop-stage').empty();
         
         const cached = this.cachedLayouts[osName];
-        
-        // 逻辑修正：如果 cached 存在但 icons 也是空的，说明之前可能出bug导致空缓存，
-        // 这里为了演示体验，如果没有图标，也加载默认。
-        let hasIcons = cached && cached.icons && cached.icons.length > 0;
-        
-        if (hasIcons) {
+        if (cached) {
             this.folderData = cached.folders || {};
             this.renderIcons(cached.icons);
         } else {
-            // 没有缓存或缓存为空 -> 加载默认配置
             this.folderData = {};
             const defaults = CONFIG.defaultIcons[osName] || [];
             defaults.forEach(icon => {
-                const id = 'def-' + Date.now() + Math.random();
-                this.addIcon(id, icon.name, icon.icon, icon.x, icon.y, '#desktop-stage', 'app', icon.color);
+                this.addIcon('def-'+Date.now()+Math.random(), icon.name, icon.icon, icon.x, icon.y, '#desktop-stage', 'app', icon.color);
             });
-            // 尝试从云端拉取（如果有登录）
             if (window.loadCloudDesktop) window.loadCloudDesktop();
         }
     }
 
-    // ... (后续 renderSidebar, checkLimit 等函数保持不变，无需修改) ...
-    // 为了确保代码完整，这里包含剩余所有方法：
-
     renderSidebar(os) {
         const container = $('#dynamic-toolbox');
         container.empty();
-        let tools = [];
-        try { tools = getToolsForOS(os); } catch (e) { tools = []; }
-        if (!tools || !Array.isArray(tools)) return;
-
+        const tools = getToolsForOS(os);
+        if(!tools) return;
         tools.forEach((cat, index) => {
-            let itemsHtml = '';
-            if (cat.items) {
-                cat.items.forEach(tool => {
-                    itemsHtml += `
-                        <div class="tool-icon" data-name="${tool.name}" data-icon="${tool.icon}" data-color="${tool.color || '#555'}">
-                            <i class="${tool.icon}" style="color:${tool.color || '#555'}"></i>
-                            <span>${tool.name}</span>
-                        </div>`;
-                });
-            }
-            container.append(`<div class="category ${index === 0 ? '' : 'collapsed'}"><div class="cat-title">${cat.title}</div><div class="cat-content">${itemsHtml}</div></div>`);
+            let items = '';
+            cat.items.forEach(t => items += `<div class="tool-icon" data-name="${t.name}" data-icon="${t.icon}" data-color="${t.color}"><i class="${t.icon}" style="color:${t.color}"></i><span>${t.name}</span></div>`);
+            container.append(`<div class="category ${index===0?'':'collapsed'}"><div class="cat-title">${cat.title}</div><div class="cat-content">${items}</div></div>`);
         });
         this.initToolDrag();
     }
@@ -84,14 +54,10 @@ class DesktopManager {
     updateSystemUI(os) {
         $('.sys-ui').addClass('hidden');
         $('body').removeClass('mobile-mode');
-        if (os === 'windows') $('.taskbar-win11').removeClass('hidden');
-        else if (os === 'macos') $('.dock-macos').removeClass('hidden');
-        else if (os === 'ubuntu') $('.dock-ubuntu').removeClass('hidden');
-        else if (os === 'android' || os === 'ios') {
-            $('body').addClass('mobile-mode');
-            $('.status-bar-mobile').removeClass('hidden');
-            this.renderMobileScreens();
-        }
+        if(os==='windows') $('.taskbar-win11').removeClass('hidden');
+        else if(os==='macos') $('.dock-macos').removeClass('hidden');
+        else if(os==='ubuntu') $('.dock-ubuntu').removeClass('hidden');
+        else if(['android','ios'].includes(os)) { $('body').addClass('mobile-mode'); $('.status-bar-mobile').removeClass('hidden'); this.renderMobileScreens(); }
     }
 
     renderMobileScreens() {
@@ -102,93 +68,74 @@ class DesktopManager {
         }
     }
 
-    checkLimit(containerId) {
-        const count = $(containerId).find('.app-icon').length;
-        if (containerId.includes('screen') && count >= CONFIG.limits.mobileScreenMax) { alert("手机单屏已满！"); return false; }
-        if (containerId === '#desktop-stage' && count >= CONFIG.limits.desktopMax) { alert("桌面图标已达上限！"); return false; }
+    checkLimit(container) {
+        const count = $(container).find('.app-icon').length;
+        if(container.includes('screen') && count >= CONFIG.limits.mobileScreenMax) { alert("满啦！"); return false; }
+        if(container==='#desktop-stage' && count >= CONFIG.limits.desktopMax) { alert("桌面图标太多啦！"); return false; }
         return true;
     }
 
-    addIcon(id, name, iconClass, x, y, container, type='app', color=null) {
-        if (!this.checkLimit(container)) return;
-        const colorStyle = color ? `color:${color};` : '';
-        const html = `
-            <div class="app-icon" id="${id}" style="left:${x}px; top:${y}px" data-name="${name}" data-type="${type}" data-color="${color || ''}">
-                <i class="${iconClass}" style="${colorStyle}"></i>
-                <span>${name}</span>
-            </div>`;
+    addIcon(id, name, icon, x, y, container, type='app', color=null) {
+        if(!this.checkLimit(container)) return;
+        const style = color ? `style="color:${color}"` : '';
+        const html = `<div class="app-icon" id="${id}" style="left:${x}px;top:${y}px" data-name="${name}" data-type="${type}" data-color="${color}"><i class="${icon}" ${style}></i><span>${name}</span></div>`;
         $(container).append(html);
         this.bindIconEvents(id);
     }
 
     bindIconEvents(id) {
         const el = $(`#${id}`);
-        const isInsideFolder = el.parent().attr('id') === 'folder-content';
-        if (!isInsideFolder) {
-            el.draggable({
-                containment: "parent", grid: [10, 10], scroll: false,
-                start: function() { $(this).css('z-index', 100); },
-                stop: function() { $(this).css('z-index', ''); }
-            });
+        if(el.parent().attr('id')!=='folder-content') {
+            el.draggable({ containment: "parent", grid: [10,10], scroll:false, start: ()=>el.css('z-index',100), stop: ()=>el.css('z-index','') });
         }
+        // 右键事件绑定
         el.on('contextmenu', (e) => {
             e.stopPropagation(); e.preventDefault();
             $('.app-icon').removeClass('selected'); el.addClass('selected');
             $('#context-menu').data('target-id', id).css({top:e.pageY, left:e.pageX}).removeClass('hidden');
         });
         el.on('dblclick', () => {
-            if (el.data('type') === 'folder') this.openFolder(id, el.data('name'));
-            else el.animate({ opacity: 0.5 }, 100).animate({ opacity: 1 }, 100);
+            if(el.data('type')==='folder') this.openFolder(id, el.data('name'));
+            else el.animate({opacity:0.5},100).animate({opacity:1},100);
         });
     }
 
     initToolDrag() {
         $('.tool-icon').draggable({
             helper: function() {
-                const icon = $(this).data('icon');
-                const color = $(this).data('color');
-                return $(`<div style="z-index:9999;width:50px;height:50px;background:white;border-radius:10px;display:flex;justify-content:center;align-items:center;box-shadow:0 5px 10px rgba(0,0,0,0.2)"><i class="${icon}" style="font-size:24px; color:${color}"></i></div>`);
-            }, appendTo: 'body', cursorAt: { top: 25, left: 25 }, revert: 'invalid'
+                const i = $(this).data('icon'), c = $(this).data('color');
+                return $(`<div style="z-index:999;width:50px;height:50px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 5px 10px rgba(0,0,0,0.2)"><i class="${i}" style="font-size:24px;color:${c}"></i></div>`);
+            }, appendTo: 'body', cursorAt: {top:25,left:25}, revert: 'invalid'
         });
     }
 
-    makeDroppable(selector) {
+    makeDroppable(sel) {
         const self = this;
-        $(selector).droppable({
+        $(sel).droppable({
             accept: '.tool-icon, .app-icon',
-            drop: function(event, ui) {
-                if (ui.draggable.hasClass('app-icon')) return; 
+            drop: function(e, ui) {
+                if(ui.draggable.hasClass('app-icon')) return;
                 const offset = $(this).offset();
-                let left = event.pageX - offset.left + ($(this).scrollLeft() || 0);
-                let top = event.pageY - offset.top;
-                if (left < 0) left = 0; if (top < 0) top = 0;
-                const name = ui.draggable.data('name');
-                const icon = ui.draggable.data('icon');
-                const color = ui.draggable.data('color');
-                self.addIcon('icon-' + Date.now(), name, icon, left, top, '#' + $(this).attr('id'), 'app', color);
+                let l = e.pageX - offset.left + ($(this).scrollLeft()||0), t = e.pageY - offset.top;
+                if(l<0)l=0; if(t<0)t=0;
+                self.addIcon('icon-'+Date.now(), ui.draggable.data('name'), ui.draggable.data('icon'), l, t, '#'+$(this).attr('id'), 'app', ui.draggable.data('color'));
             }
         });
     }
-
+    
     initDragDrop() { this.makeDroppable('#desktop-stage'); }
 
     initFolderWindow() {
-        $('#btn-close-folder').click(() => {
-            $('#folder-window').addClass('hidden');
-            this.currentOpenFolderId = null;
-        });
+        $('#btn-close-folder').click(() => { $('#folder-window').addClass('hidden'); this.currentOpenFolderId=null; });
         $('#folder-content').droppable({
-            accept: '.tool-icon', 
-            drop: (event, ui) => {
-                if (ui.draggable.hasClass('tool-icon')) {
-                    const name = ui.draggable.data('name');
-                    const icon = ui.draggable.data('icon');
-                    const color = ui.draggable.data('color');
-                    const newId = 'in-folder-' + Date.now();
-                    this.addIcon(newId, name, icon, 0, 0, '#folder-content', 'app', color);
-                    if (this.currentOpenFolderId) {
-                        if (!this.folderData[this.currentOpenFolderId]) this.folderData[this.currentOpenFolderId] = [];
-                        this.folderData[this.currentOpenFolderId].push({ id: newId, name, icon, color, type: 'app' });
+            accept: '.tool-icon',
+            drop: (e, ui) => {
+                if(ui.draggable.hasClass('tool-icon')) {
+                    const name=ui.draggable.data('name'), icon=ui.draggable.data('icon'), color=ui.draggable.data('color'), id='in-folder-'+Date.now();
+                    this.addIcon(id, name, icon, 0, 0, '#folder-content', 'app', color);
+                    if(this.currentOpenFolderId) {
+                        if(!this.folderData[this.currentOpenFolderId]) this.folderData[this.currentOpenFolderId]=[];
+                        this.folderData[this.currentOpenFolderId].push({id,name,icon,color,type:'app'});
                     }
                 }
             }
@@ -200,45 +147,28 @@ class DesktopManager {
         $('#folder-title').text(name);
         $('#folder-window').removeClass('hidden');
         $('#folder-content').empty();
-        if (this.folderData[id]) {
-            this.folderData[id].forEach(icon => {
-                this.addIcon(icon.id, icon.name, icon.icon, 0, 0, '#folder-content', 'app', icon.color);
-            });
-        } else {
-            this.folderData[id] = [];
-        }
+        if(this.folderData[id]) this.folderData[id].forEach(i => this.addIcon(i.id, i.name, i.icon, 0, 0, '#folder-content', 'app', i.color));
+        else this.folderData[id] = [];
     }
 
     initContextMenu() {
         $(document).on('contextmenu', '#desktop-area', (e) => {
-            if ($(e.target).closest('.app-icon').length) return;
+            if($(e.target).closest('.app-icon').length) return;
             e.preventDefault();
             $('#context-menu').data('target-id', null).css({top:e.pageY, left:e.pageX}).removeClass('hidden');
         });
         $(document).on('click', () => $('#context-menu').addClass('hidden'));
         $('#ctx-new-folder').click(() => {
-            const menu = $('#context-menu');
-            const offset = $('#desktop-stage').offset();
-            let x = parseInt(menu.css('left')) - offset.left;
-            let y = parseInt(menu.css('top')) - offset.top;
-            if (x < 0) x = 20; if (y < 0) y = 20;
-            const id = 'folder-' + Date.now();
-            this.addIcon(id, '新建文件夹', 'fa-solid fa-folder', x, y, '#desktop-stage', 'folder', null);
-            this.folderData[id] = [];
+            const off = $('#desktop-stage').offset(), m = $('#context-menu');
+            this.addIcon('folder-'+Date.now(), '新建文件夹', 'fa-solid fa-folder', parseInt(m.css('left'))-off.left, parseInt(m.css('top'))-off.top, '#desktop-stage', 'folder', null);
         });
         $('#ctx-rename').click(() => {
-            const targetId = $('#context-menu').data('target-id');
-            if(targetId) {
-                const newName = prompt("重命名为：");
-                if(newName) $(`#${targetId}`).data('name', newName).find('span').text(newName);
-            }
+            const tid = $('#context-menu').data('target-id');
+            if(tid) { const n = prompt("重命名："); if(n) $(`#${tid} span`).text(n); }
         });
         $('#ctx-delete').click(() => {
-            const targetId = $('#context-menu').data('target-id');
-            if(targetId) {
-                $(`#${targetId}`).remove();
-                if(this.folderData[targetId]) delete this.folderData[targetId];
-            }
+            const tid = $('#context-menu').data('target-id');
+            if(tid) { $(`#${tid}`).remove(); if(this.folderData[tid]) delete this.folderData[tid]; }
         });
     }
 
@@ -246,24 +176,12 @@ class DesktopManager {
         const icons = [];
         $('#desktop-stage .app-icon').each(function() {
             const el = $(this);
-            icons.push({
-                id: el.attr('id'),
-                name: el.data('name'),
-                icon: el.find('i').attr('class'),
-                color: el.data('color'),
-                x: parseFloat(el.css('left')),
-                y: parseFloat(el.css('top')),
-                type: el.data('type') || 'app',
-                parent: el.parent().attr('id')
-            });
+            icons.push({ id:el.attr('id'), name:el.data('name'), icon:el.find('i').attr('class'), color:el.data('color'), x:parseFloat(el.css('left')), y:parseFloat(el.css('top')), type:el.data('type'), parent:el.parent().attr('id') });
         });
-        this.cachedLayouts[os] = { icons: icons, folders: this.folderData };
+        this.cachedLayouts[os] = { icons, folders: this.folderData };
     }
-
-    exportLayout() {
-        this.saveToMemory(this.currentOS);
-        return this.cachedLayouts[this.currentOS];
-    }
+    
+    exportLayout() { this.saveToMemory(this.currentOS); return this.cachedLayouts[this.currentOS]; }
     
     loadLayout(data) {
         if(!data) return;
@@ -274,10 +192,9 @@ class DesktopManager {
     }
     
     renderIcons(icons) {
-        icons.forEach(icon => {
-            let container = '#' + icon.parent;
-            if ($(container).length === 0) container = '#desktop-stage';
-            this.addIcon(icon.id, icon.name, icon.icon, icon.x, icon.y, container, icon.type, icon.color);
+        icons.forEach(i => {
+            let c = '#'+i.parent; if($(c).length===0) c='#desktop-stage';
+            this.addIcon(i.id, i.name, i.icon, i.x, i.y, c, i.type, i.color);
         });
     }
 }

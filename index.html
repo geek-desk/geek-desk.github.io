@@ -2,11 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>桌面分享世界</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>我的云桌面</title>
+    <!-- jQuery UI 样式 -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <!-- 引入 FontAwesome 用于图标占位 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 自定义样式 -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/desktop.css">
 </head>
@@ -19,131 +22,143 @@
         <div id="desktop-area" class="os-windows">
             <!-- 顶部系统切换标签 -->
             <div id="os-tabs">
-                <button data-os="windows" class="active">Windows 11</button>
-                <button data-os="macos">macOS</button>
-                <button data-os="ubuntu">Ubuntu</button>
-                <button data-os="android">Android</button>
-                <button data-os="ios">iOS</button>
+                <button data-os="windows" class="active"><i class="fa-brands fa-windows"></i> Win11</button>
+                <button data-os="macos"><i class="fa-brands fa-apple"></i> macOS</button>
+                <button data-os="ubuntu"><i class="fa-brands fa-linux"></i> Ubuntu</button>
+                <button data-os="android"><i class="fa-brands fa-android"></i> Android</button>
+                <button data-os="ios"><i class="fa-solid fa-mobile-screen"></i> iOS</button>
             </div>
 
-            <!-- 桌面舞台 (手机模式下会有分屏容器) -->
+            <!-- 桌面舞台 (图标放置区) -->
             <div id="desktop-stage">
-                <!-- 动态生成的图标和窗口将放在这里 -->
-                <div class="app-icon default-icon" data-type="system" id="my-computer">
-                    <i class="fa-solid fa-desktop"></i>
+                <!-- 默认图标 -->
+                <div class="app-icon" id="my-computer" style="top:20px; left:20px;" data-name="我的电脑">
+                    <i class="fa-solid fa-desktop" style="color: #fff;"></i>
                     <span>我的电脑</span>
                 </div>
             </div>
 
-            <!-- 右键菜单 -->
+            <!-- 右键菜单 (默认隐藏) -->
             <ul id="context-menu" class="hidden">
-                <li id="ctx-new-folder">新建文件夹</li>
-                <li id="ctx-rename">重命名</li>
-                <li id="ctx-delete">删除</li>
+                <li id="ctx-new-folder"><i class="fa-solid fa-folder-plus"></i> 新建文件夹</li>
+                <li id="ctx-refresh"><i class="fa-solid fa-rotate-right"></i> 刷新</li>
+                <li class="separator"></li>
+                <li id="ctx-delete"><i class="fa-solid fa-trash"></i> 删除</li>
             </ul>
         </div>
 
         <!-- 右侧：工具栏 -->
         <div id="sidebar">
-            <!-- 广告位 -->
-            <div class="ad-slot">Google Adsense Area</div>
-
-            <!-- 世界链接 -->
-            <div class="world-link-btn" id="btn-open-world">
-                <i class="fa-solid fa-earth-asia"></i> 进入【世界】
+            <!-- 1. 广告位 -->
+            <div class="ad-slot">
+                <p>Google Adsense</p>
             </div>
 
-            <!-- 用户信息区 -->
+            <!-- 2. 世界入口 -->
+            <div class="world-link-btn" id="btn-open-world">
+                <i class="fa-solid fa-earth-americas"></i> 进入【世界】广场
+            </div>
+
+            <!-- 3. 用户信息区 -->
             <div id="user-panel">
                 <div id="guest-view">
-                    <p>游客模式</p>
-                    <button id="btn-login-modal">登录 / 注册</button>
+                    <p>当前身份：游客</p>
+                    <button id="btn-login-modal" class="btn-primary">登录 / 注册</button>
                 </div>
                 <div id="logged-view" style="display:none;">
-                    <p id="user-nickname">未命名用户</p>
-                    <div class="stats">
-                        <span>❤️ <span id="user-likes">0</span></span>
-                        <span>⭐ <span id="user-colls">0</span></span>
+                    <div class="user-info">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span id="user-nickname">用户</span>
                     </div>
-                    <button id="btn-save">保存桌面</button>
-                    <button id="btn-logout">退出</button>
+                    <div class="stats">
+                        <span><i class="fa-solid fa-heart" style="color:red;"></i> <span id="user-likes">0</span></span>
+                        <span><i class="fa-solid fa-star" style="color:orange;"></i> <span id="user-colls">0</span></span>
+                    </div>
+                    <div class="user-actions">
+                        <button id="btn-save" class="btn-success">保存桌面</button>
+                        <button id="btn-logout" class="btn-danger">退出</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 工具箱 (分类) -->
+            <!-- 4. 工具箱 (组件库) -->
             <div class="toolbox">
-                <h3>组件箱</h3>
-                
                 <div class="category">
-                    <div class="cat-title">游戏</div>
+                    <div class="cat-title"><i class="fa-solid fa-gamepad"></i> 游戏</div>
                     <div class="cat-content">
-                        <div class="tool-icon" data-name="王者荣耀" data-img="wangzhe"><i class="fa-solid fa-gamepad"></i> 王者荣耀</div>
-                        <div class="tool-icon" data-name="CS:GO" data-img="csgo"><i class="fa-solid fa-crosshairs"></i> CS:GO</div>
+                        <div class="tool-icon" data-name="王者荣耀" data-icon="fa-shield-halved"><i class="fa-solid fa-shield-halved"></i> 王者荣耀</div>
+                        <div class="tool-icon" data-name="CS:GO" data-icon="fa-crosshairs"><i class="fa-solid fa-crosshairs"></i> CS:GO</div>
+                        <div class="tool-icon" data-name="Minecraft" data-icon="fa-cubes"><i class="fa-solid fa-cubes"></i> Minecraft</div>
                     </div>
                 </div>
 
                 <div class="category">
-                    <div class="cat-title">浏览器</div>
+                    <div class="cat-title"><i class="fa-brands fa-chrome"></i> 浏览器</div>
                     <div class="cat-content">
-                        <div class="tool-icon" data-name="Chrome" data-img="chrome"><i class="fa-brands fa-chrome"></i> 谷歌</div>
-                        <div class="tool-icon" data-name="Baidu" data-img="baidu"><i class="fa-solid fa-paw"></i> 百度</div>
+                        <div class="tool-icon" data-name="Chrome" data-icon="fa-chrome"><i class="fa-brands fa-chrome"></i> 谷歌浏览器</div>
+                        <div class="tool-icon" data-name="Edge" data-icon="fa-edge"><i class="fa-brands fa-edge"></i> Edge</div>
                     </div>
                 </div>
 
                 <div class="category">
-                    <div class="cat-title">办公</div>
+                    <div class="cat-title"><i class="fa-solid fa-briefcase"></i> 办公</div>
                     <div class="cat-content">
-                        <div class="tool-icon" data-name="Word" data-img="word"><i class="fa-solid fa-file-word"></i> Word</div>
-                        <div class="tool-icon" data-name="Excel" data-img="excel"><i class="fa-solid fa-file-excel"></i> Excel</div>
-                    </div>
-                </div>
-                 
-                <!-- 壁纸设置 -->
-                <div class="category">
-                    <div class="cat-title">壁纸设置</div>
-                    <div class="cat-content wallpaper-list">
-                        <!-- JS 填充壁纸缩略图 -->
+                        <div class="tool-icon" data-name="Word" data-icon="fa-file-word"><i class="fa-solid fa-file-word"></i> Word</div>
+                        <div class="tool-icon" data-name="Excel" data-icon="fa-file-excel"><i class="fa-solid fa-file-excel"></i> Excel</div>
+                        <div class="tool-icon" data-name="WeChat" data-icon="fa-comments"><i class="fa-solid fa-comments"></i> 微信</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 登录弹窗 (隐藏) -->
-    <div id="modal-overlay" class="hidden">
-        <div class="modal">
-            <h2>欢迎来到桌面世界</h2>
-            <input type="email" id="email" placeholder="邮箱">
-            <input type="password" id="password" placeholder="密码">
-            <button id="btn-do-login">登录</button>
-            <button id="btn-do-signup">注册</button>
-            <button id="btn-close-modal">关闭</button>
+    <!-- 登录/注册 弹窗 -->
+    <div id="modal-overlay" class="overlay hidden">
+        <div class="modal-box">
+            <h3>账号登录</h3>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="请输入邮箱">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+            <div class="form-actions">
+                <button id="btn-do-login" class="btn-primary">登录</button>
+                <button id="btn-do-signup" class="btn-secondary">注册</button>
+            </div>
+            <button id="btn-close-modal" class="btn-close">X</button>
         </div>
     </div>
     
-    <!-- 世界弹窗 (隐藏) -->
-    <div id="world-overlay" class="hidden">
+    <!-- 世界 弹窗 -->
+    <div id="world-overlay" class="overlay hidden">
         <div class="world-modal">
             <div class="world-header">
-                <h2>世界广场</h2>
-                <button id="btn-close-world">X</button>
-            </div>
-            <div class="world-tabs">
-                <button class="active">最新</button>
-                <button>热门</button>
+                <h2>🌏 世界广场</h2>
+                <div class="world-filter">
+                    <button class="active">🔥 热门</button>
+                    <button>🕒 最新</button>
+                </div>
+                <button id="btn-close-world" class="btn-close-text">关闭</button>
             </div>
             <div id="world-grid">
-                <!-- 动态加载其他玩家的桌面 -->
+                <!-- 这里会通过 JS 加载其他人的桌面 -->
+                <p style="text-align:center; color:#888; margin-top:50px;">正在连接世界频道...</p>
             </div>
         </div>
     </div>
 
-    <!-- JS 引用 -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- 脚本引用顺序不能乱 -->
+    <!-- 1. jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- 2. jQuery UI (拖拽功能) -->
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <!-- 3. jQuery Touch Punch (让手机支持拖拽) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 4. Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <!-- 5. 你的业务逻辑代码 -->
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/desktop.js"></script>

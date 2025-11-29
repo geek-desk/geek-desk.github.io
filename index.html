@@ -4,10 +4,260 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>我的云桌面</title>
+    <!-- 第三方库 -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/desktop.css">
+    
+    <style>
+        /* ================================================================= */
+        /*                           1. 全局布局                             */
+        /* ================================================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; height: 100vh; overflow: hidden; background: #111; color: #333; }
+        #app-container { display: flex; height: 100%; width: 100%; position: relative; overflow: hidden; }
+        .hidden { display: none !important; }
+
+        /* ================================================================= */
+        /*                           2. 左侧桌面区域                         */
+        /* ================================================================= */
+        #desktop-area {
+            flex: 1; position: relative; background-size: cover; background-position: center; transition: background-image 0.5s ease;
+            width: 100%; overflow: hidden;
+        }
+
+        /* --- 顶部 OS 切换胶囊 --- */
+        #os-tabs {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            z-index: 50; display: flex; gap: 8px;
+            background: rgba(0,0,0,0.4); padding: 5px 8px; border-radius: 50px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);
+        }
+        #os-tabs button {
+            background: transparent; border: none; 
+            color: rgba(255,255,255,0.9);
+            padding: 6px 14px; border-radius: 20px; font-size: 13px; transition: 0.3s;
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
+        }
+        #os-tabs button.active { background: white; color: #333; font-weight: bold; }
+        
+        /* 顶部图标品牌色 */
+        #os-tabs button i.fa-windows { color: #00a8e8; }
+        #os-tabs button i.fa-apple { color: #f5f5f7; }
+        #os-tabs button i.fa-ubuntu { color: #e95420; }
+        #os-tabs button i.fa-android { color: #3dda84; }
+        #os-tabs button i.fa-app-store-ios { color: #007aff; }
+        #os-tabs button.active i.fa-windows { color: #0078d7; }
+        #os-tabs button.active i.fa-apple { color: #000; }
+
+        /* --- 舞台容器 --- */
+        #stage-wrapper {
+            width: 100%; height: 100%; position: relative;
+            padding-top: 60px; padding-bottom: 60px; transition: all 0.3s;
+        }
+        .os-ubuntu #stage-wrapper { padding-left: 70px; }
+        #desktop-stage { width: 100%; height: 100%; position: relative; }
+
+        /* --- 手机外壳 (修复版：底部不贴边) --- */
+        .mobile-mode #stage-wrapper {
+            width: 320px; 
+            height: 680px; 
+            /* 关键：增加底部边距 80px */
+            margin: 60px auto 80px auto; 
+            border: 12px solid #1a1a1a; 
+            border-radius: 40px;
+            box-shadow: 0 0 0 4px #333, 0 20px 50px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.5);
+            background-color: #000; 
+            overflow: hidden; 
+            padding: 0;
+        }
+        .mobile-mode #desktop-stage {
+            display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+            height: 100%; width: 100%; scrollbar-width: none; 
+        }
+        .mobile-mode #desktop-stage::-webkit-scrollbar { display: none; }
+        .mobile-mode .mobile-screen {
+            min-width: 100%; height: 100%; scroll-snap-align: start;
+            position: relative; 
+            padding-top: 40px; /* 内部避让状态栏 */
+        }
+
+        /* --- 桌面图标 --- */
+        .app-icon {
+            width: 70px; height: 90px; position: absolute;
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; padding: 5px; border-radius: 6px; transition: transform 0.1s;
+        }
+        .app-icon:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
+        .app-icon i { font-size: 40px; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+        .app-icon span { 
+            font-size: 12px; line-height: 1.2; text-align: center; width: 100%; 
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+            color: white; text-shadow: 0 1px 2px black;
+        }
+        .app-icon[data-type="folder"] i { color: #f1c40f !important; }
+        .app-icon.selected { background: rgba(255,255,255,0.3); border: 1px dotted rgba(255,255,255,0.5); }
+
+        /* --- 系统 UI 组件 --- */
+        .sys-ui { position: absolute; z-index: 90; }
+
+        /* Windows Taskbar */
+        .taskbar-win11 { bottom: 0; left: 0; right: 0; height: 48px; background: rgba(243, 243, 243, 0.85); backdrop-filter: blur(15px); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-top: 1px solid rgba(255,255,255,0.4); }
+        .taskbar-win11 .start-btn { font-size: 22px; color: #0078d7; margin-right: 15px; cursor: pointer; transition: 0.2s; }
+        .taskbar-win11 .start-btn:hover { transform: scale(1.1) rotate(5deg); }
+        .taskbar-win11 .task-icons { flex: 1; display: flex; justify-content: center; gap: 15px; font-size: 24px; }
+        .taskbar-win11 .task-icons i { padding: 5px; border-radius: 4px; transition: 0.2s; cursor: pointer; position: relative; }
+        .taskbar-win11 .task-icons i:hover { background: rgba(255,255,255,0.5); transform: translateY(-5px); }
+        .taskbar-win11 .tray-area { display: flex; gap: 10px; align-items: center; font-size: 12px; color: #444; }
+
+        /* macOS Dock */
+        .dock-macos { bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; }
+        .dock-macos .dock-container { pointer-events: auto; background: rgba(255,255,255,0.3); backdrop-filter: blur(20px); padding: 8px; border-radius: 20px; display: flex; gap: 12px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .dock-macos .dock-item { width: 48px; height: 48px; background: white; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 26px; transition:0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .dock-macos .dock-item:hover { transform: scale(1.2) translateY(-10px); }
+
+        /* Ubuntu Dock */
+        .dock-ubuntu { top: 50px; bottom: 0; left: 0; width: 64px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
+        .dock-ubuntu .dock-item { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-bottom: 12px; color: white; cursor: pointer; transition: 0.2s; position: relative; left: 0; }
+        .dock-ubuntu .dock-item:hover { background: rgba(255,255,255,0.2); left: 5px; }
+
+        /* 手机状态栏 */
+        .status-bar-mobile {
+            top: 60px; left: 50%; transform: translateX(-50%);
+            width: 320px; height: 30px; padding: 0 25px; 
+            display: flex; justify-content: space-between; align-items: center;
+            color: white; font-weight: bold; font-size: 12px; z-index: 100;
+            pointer-events: none;
+        }
+        .status-bar-mobile .notch { width: 120px; height: 24px; background: #000; border-radius: 0 0 14px 14px; position: absolute; left: 50%; transform: translateX(-50%); top:0; }
+
+        /* 文件夹窗口 */
+        #folder-window { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 300px; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 200; display: flex; flex-direction: column; animation: zoomIn 0.2s; }
+        @keyframes zoomIn { from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .folder-header { height: 45px; background: rgba(230,230,230,0.8); border-bottom: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-radius: 12px 12px 0 0; font-weight: bold; color: #333; }
+        #folder-content { flex: 1; padding: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-content: flex-start; }
+        #folder-content .app-icon { position: relative; left: auto !important; top: auto !important; width: 60px; height: 80px; color: #333; }
+        #folder-content .app-icon span { color: #333; text-shadow: none; font-weight: 500; }
+
+        /* 右键菜单 */
+        #context-menu { position: absolute; width: 150px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); box-shadow: 0 5px 20px rgba(0,0,0,0.2); border-radius: 8px; padding: 6px; z-index: 999; border: 1px solid #ddd; }
+        #context-menu .separator { height: 1px; background: #eee; margin: 4px 0; }
+        #context-menu li { padding: 8px 12px; cursor: pointer; font-size: 13px; color: #333; display: flex; gap: 10px; border-radius: 4px; align-items: center; }
+        #context-menu li:hover { background: #0078d7; color: white; }
+
+        /* ================================================================= */
+        /*                           3. 右侧工具栏                           */
+        /* ================================================================= */
+        #sidebar {
+            width: 280px; height: 100%; background: #f8f9fa; border-left: 1px solid #ddd;
+            display: flex; flex-direction: column; z-index: 200;
+            position: absolute; right: 0; top: 0;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), width 0.3s ease;
+        }
+        #sidebar.collapsed { transform: translateX(100%); }
+        #sidebar.view-mode { display: none; } 
+
+        #sidebar-toggle-btn {
+            position: absolute; left: -32px; top: 50%; transform: translateY(-50%);
+            width: 32px; height: 60px; background: #f8f9fa; border: 1px solid #ddd; border-right: none;
+            border-radius: 8px 0 0 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: #555; box-shadow: -3px 0 8px rgba(0,0,0,0.05); z-index: 201;
+        }
+        #sidebar-toggle-btn:hover { background: #fff; color: #0984e3; }
+
+        .ad-slot { height: 80px; background: #e9ecef; display: flex; align-items: center; justify-content: center; color: #adb5bd; font-size: 12px; border-bottom: 1px solid #ddd; flex-shrink: 0; }
+        .world-link-btn { padding: 15px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; text-align: center; font-weight: bold; cursor: pointer; flex-shrink: 0; }
+        .world-link-btn:hover { opacity: 0.9; }
+
+        #user-panel { padding: 15px; background: white; border-bottom: 1px solid #eee; flex-shrink: 0; }
+        .user-info { font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .stats { font-size: 12px; color: #666; margin-bottom: 10px; display: flex; gap: 10px; }
+        .user-actions { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+
+        .toolbox { flex: 1; overflow-y: auto; padding: 15px; background: #f1f2f6; }
+        .category { margin-bottom: 15px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+        .cat-title {
+            padding: 10px 15px; font-weight: bold; font-size: 14px; color: #2d3436;
+            background: #fff; border-bottom: 1px solid #f1f1f1; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .cat-title:hover { background: #f9f9f9; color: #0984e3; }
+        .cat-title::before { content: ''; display: inline-block; width: 4px; height: 14px; background: #0984e3; margin-right: 8px; border-radius: 2px; }
+        .cat-title::after { content: '\f078'; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; color: #999; transition: transform 0.3s ease; }
+        
+        .category.collapsed .cat-content { display: none; }
+        .category.collapsed .cat-title { border-bottom: none; }
+        .category.collapsed .cat-title::after { transform: rotate(-90deg); }
+
+        .cat-content { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: #fff; }
+
+        .tool-icon {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #f8f9fa; border: 1px solid #eee; border-radius: 8px;
+            padding: 15px 5px; cursor: grab; transition: all 0.2s;
+        }
+        .tool-icon:hover { background: #e1f0ff; border-color: #74b9ff; transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+        .tool-icon i { font-size: 28px; margin-bottom: 8px; color: #555; }
+        .tool-icon span { font-size: 12px; color: #666; text-align: center; word-break: break-all; }
+
+        /* 留言板 */
+        #comments-panel { flex: 1; background: #fff; display: flex; flex-direction: column; overflow: hidden; }
+        #comments-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .comment-item { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 13px; }
+        .comment-input-area { padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 5px; }
+
+        /* ================================================================= */
+        /*                           4. 弹窗与组件                           */
+        /* ================================================================= */
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 12px; width: 320px; position: relative; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .form-actions { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+
+        .world-modal { width: 85%; height: 85%; background: #f5f6fa; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .world-header { padding: 20px; background: white; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        #world-grid { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 25px; align-content: flex-start; justify-content: center; }
+        .world-card { width: 180px; height: 160px; background: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s; }
+        .world-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card-preview { flex: 1; display: flex; justify-content: center; align-items: center; background: #dfe6e9; color: #b2bec3; }
+        .card-info { padding: 10px; font-size: 13px; background: white; border-top: 1px solid #f1f1f1; }
+
+        button { border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; color: white; font-size: 13px; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .btn-primary { background: #0984e3; }
+        .btn-success { background: #00b894; flex: 1; }
+        .btn-danger { background: #d63031; }
+        .btn-secondary { background: #636e72; }
+        .btn-close { position: absolute; top: 15px; right: 15px; background: transparent; color: #999; font-size: 18px; padding: 0; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
+        input:focus { border-color: #0984e3; }
+
+        /* ================================================================= */
+        /*                           5. 手机端适配                           */
+        /* ================================================================= */
+        @media (max-width: 768px) {
+            /* 侧边栏变窄，图标单列 */
+            #sidebar { width: 130px; }
+            .cat-content { grid-template-columns: 1fr; padding: 10px; gap: 8px; }
+            
+            /* 调整间距 */
+            .toolbox { padding: 10px; }
+            .cat-title { padding: 8px 10px; font-size: 12px; }
+            .tool-icon { padding: 10px 2px; }
+            .tool-icon i { font-size: 24px; }
+            .tool-icon span { font-size: 11px; }
+            
+            /* 用户面板 */
+            #user-panel { padding: 10px; }
+            .user-actions { flex-direction: column; }
+            .btn-success, .btn-danger { width: 100%; font-size: 12px; padding: 5px; }
+            .world-link-btn { font-size: 12px; padding: 10px; }
+            
+            /* 弹窗全屏 */
+            .world-modal { width: 100%; height: 100%; border-radius: 0; }
+            #world-grid { justify-content: center; padding: 15px; }
+        }
+    </style>
 </head>
 <body>
 
@@ -21,7 +271,7 @@
                 <button data-os="ubuntu"><i class="fa-brands fa-ubuntu"></i> Ubuntu</button>
                 <button data-os="android"><i class="fa-brands fa-android"></i> Android</button>
                 <button data-os="ios"><i class="fa-brands fa-app-store-ios"></i> iOS</button>
-                <button id="btn-exit-view" class="hidden btn-danger" style="margin-left:auto;">退出查看</button>
+                <button id="btn-exit-view" class="hidden btn-danger" style="margin-left:auto;" data-i18n="back_home">返回</button>
             </div>
 
             <!-- 舞台 -->
@@ -29,7 +279,7 @@
                 <div id="desktop-stage"></div>
             </div>
 
-            <!-- Windows 11 任务栏 (带图标和特效) -->
+            <!-- Windows 11 任务栏 -->
             <div class="sys-ui taskbar-win11 hidden">
                 <div class="start-btn"><i class="fa-brands fa-windows"></i></div>
                 <div class="task-icons">
@@ -94,32 +344,33 @@
         <div id="sidebar">
             <button id="sidebar-toggle-btn"><i class="fa-solid fa-chevron-right"></i></button>
             <div class="ad-slot"><p>Google Adsense</p></div>
-            <div class="world-link-btn" id="btn-open-world"><i class="fa-solid fa-earth-americas"></i> 进入【世界】</div>
+            <div class="world-link-btn" id="btn-open-world" data-i18n="world">进入【世界】</div>
 
             <div id="user-panel">
                 <div id="guest-view">
-                    <button id="btn-login-modal" class="btn-primary" style="width:100%">登录 / 注册</button>
+                    <button id="btn-login-modal" class="btn-primary" style="width:100%" data-i18n="login_btn">登录 / 注册</button>
                 </div>
                 <div id="logged-view" style="display:none;">
                     <div class="user-info"><i class="fa-solid fa-user-circle"></i> <span id="user-nickname"></span></div>
                     <div class="stats"><span>❤️ <span id="count-likes">0</span></span> <span>⭐ <span id="count-favs">0</span></span></div>
                     <div class="user-actions">
-                        <label title="公开到世界" style="font-size:12px;display:flex;align-items:center;cursor:pointer;"><input type="checkbox" id="chk-public" style="width:auto;margin-right:5px;"> 公开</label>
-                        <button id="btn-save" class="btn-success">保存</button>
-                        <button id="btn-logout" class="btn-danger">退出</button>
+                        <label title="公开到世界" style="font-size:12px;display:flex;align-items:center;cursor:pointer;"><input type="checkbox" id="chk-public" style="width:auto;margin-right:5px;"> <span data-i18n="save_public">公开</span></label>
+                        <button id="btn-save" class="btn-success" data-i18n="save">保存</button>
+                        <button id="btn-logout" class="btn-danger" data-i18n="logout">退出</button>
                     </div>
                 </div>
             </div>
             
+            <!-- 工具箱容器 -->
             <div class="toolbox" id="dynamic-toolbox"></div>
             
-            <!-- 留言板 -->
+            <!-- 留言板 (查看模式时显示) -->
             <div id="comments-panel" class="hidden">
                 <div style="padding:10px;font-weight:bold;border-bottom:1px solid #eee;">留言板</div>
                 <div id="comments-list"></div>
                 <div class="comment-input-area">
-                    <input type="text" id="inp-comment" placeholder="说点什么...">
-                    <button id="btn-send-comment" class="btn-primary">发送</button>
+                    <input type="text" id="inp-comment" placeholder="..." data-i18n="comment_ph">
+                    <button id="btn-send-comment" class="btn-primary" data-i18n="send">发送</button>
                 </div>
             </div>
         </div>
@@ -128,7 +379,7 @@
     <!-- 弹窗 -->
     <div id="modal-overlay" class="overlay hidden">
         <div class="modal-box">
-            <h3>账号登录</h3>
+            <h3 data-i18n="login_btn">账号登录</h3>
             <input type="email" id="email" placeholder="邮箱" autocomplete="username">
             <input type="password" id="password" placeholder="密码" autocomplete="current-password">
             <div class="form-actions"><button id="btn-do-login" class="btn-primary">登录</button><button id="btn-do-signup" class="btn-secondary">注册</button></div>
@@ -137,15 +388,18 @@
     </div>
     <div id="world-overlay" class="overlay hidden">
         <div class="world-modal">
-            <div class="world-header"><h2>🌏 世界广场</h2><button id="btn-close-world" class="btn-danger">关闭</button></div>
+            <div class="world-header"><h2 data-i18n="world">世界广场</h2><button id="btn-close-world" class="btn-danger">关闭</button></div>
             <div id="world-grid"></div>
         </div>
     </div>
 
+    <!-- JS 引用 -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- 引入逻辑文件 -->
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/desktop.js"></script>

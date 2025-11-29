@@ -1,9 +1,16 @@
 // js/desktop.js
 // 桌面渲染、图标生成和侧边栏逻辑
+// 依赖：data.js (常量), core.js (状态变量和切换函数)
 
-/** 渲染桌面图标 */
+/** * 渲染桌面图标 
+ * @param {string} sysId - 当前系统 ID
+ * @param {number} screenIndex - 当前手机分屏索引
+ */
 const renderDesktop = (sysId, screenIndex) => {
+    // 确保数据结构存在，防止运行时错误
     const desktopConfig = userDesktops[sysId];
+    if (!desktopConfig) return; 
+
     const wallpaper = WALLPAPERS[desktopConfig.wallpaper];
     const screenIcons = desktopConfig.screens[screenIndex]; // 获取当前屏幕的图标列表
 
@@ -45,22 +52,24 @@ const renderDesktop = (sysId, screenIndex) => {
     // 3. 渲染分屏指示器 (仅手机系统)
     renderScreenIndicator(sysId);
     
-    // 4. 绑定图标选中事件
-    $iconArea.on('click', '.desktop-icon', function(event) {
+    // 4. 绑定图标选中事件 (注意：使用 off() 清除旧事件，防止重复绑定)
+    $iconArea.off('click', '.desktop-icon').on('click', '.desktop-icon', function(event) {
         event.stopPropagation(); 
         $('.desktop-icon').removeClass('selected');
         $(this).addClass('selected');
     });
 
     // 点击桌面背景时，取消所有选中状态
-    $('#desktop-background, #icon-area').on('click', function(event) {
+    $('#desktop-background, #icon-area').off('click').on('click', function(event) {
          if (!$(event.target).closest('.desktop-icon').length) {
             $('.desktop-icon').removeClass('selected');
         }
     });
 };
 
-/** 渲染分屏指示器 */
+/** * 渲染分屏指示器 
+ * @param {string} sysId - 当前系统 ID
+ */
 const renderScreenIndicator = (sysId) => {
     const sys = SYSTEMS[sysId];
     const $indicator = $('#screen-indicator');
@@ -74,32 +83,38 @@ const renderScreenIndicator = (sysId) => {
             if (i === currentScreenIndex) {
                 $dot.addClass('active');
             }
-            $dot.on('click', () => switchScreen(i));
+            // 使用 switchScreen (来自 core.js) 切换屏幕
+            $dot.on('click', () => switchScreen(i)); 
             $indicator.append($dot);
         }
     }
 };
 
-/** 渲染应用库侧边栏 */
+/** * 渲染应用库侧边栏 
+ * @param {string} sysId - 当前系统 ID
+ */
 const renderSidebar = (sysId) => {
     const $categoryContainer = $('#sidebar-categories');
     $categoryContainer.empty();
     
-    // 默认过滤器设置为第一个系统适用的分类 (这里默认用 'browser' 或 'system' 都可以)
+    // 默认过滤器设置为第一个系统适用的分类 (如果存在)
     let initialCategory = 'system'; 
-    
+    let firstCategoryFound = false;
+
     // 1. 渲染分类按钮
     Object.keys(CATEGORIES).forEach(catId => {
-        // 只有当前系统至少有一个应用属于这个分类时才显示
+        // 检查当前系统是否有应用属于这个分类
         const hasApps = APP_LIST.some(app => app.sys_category.includes(sysId) && app.func_category === catId);
         
         if (hasApps) {
+            if (!firstCategoryFound) {
+                initialCategory = catId;
+                firstCategoryFound = true;
+            }
+
             const $btn = $(`<button data-cat-id="${catId}">${CATEGORIES[catId]}</button>`);
             
-            if (catId === initialCategory) {
-                $btn.addClass('active');
-            }
-            
+            // 绑定点击事件，用于切换分类
             $btn.on('click', function() {
                 // 重新渲染图标列表
                 renderSidebarIcons(sysId, catId); 
@@ -111,16 +126,23 @@ const renderSidebar = (sysId) => {
         }
     });
     
-    // 2. 渲染初始图标
+    // 2. 设置初始活动分类
+    $(`button[data-cat-id="${initialCategory}"]`).addClass('active');
+
+    // 3. 渲染初始图标
     renderSidebarIcons(sysId, initialCategory);
 };
 
-/** 过滤并显示侧边栏图标 */
+/** * 过滤并显示侧边栏图标 
+ * @param {string} sysId - 当前系统 ID
+ * @param {string} catId - 当前分类 ID
+ */
 const renderSidebarIcons = (sysId, catId) => {
     const $iconList = $('#sidebar-icon-list');
     $iconList.empty();
 
     const filteredApps = APP_LIST.filter(app => 
+        // 筛选逻辑：适用系统 AND 功能分类
         app.sys_category.includes(sysId) && app.func_category === catId
     );
 
@@ -132,7 +154,7 @@ const renderSidebarIcons = (sysId, catId) => {
             </div>
         `);
         
-        // TODO: 绑定拖动事件的初始化逻辑
+        // 侧边栏图标的拖动逻辑将在 drag-handler.js 中处理
         $iconList.append($icon);
     });
 };

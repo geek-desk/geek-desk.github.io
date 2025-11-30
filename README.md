@@ -46,4 +46,4 @@
 
 1. **Clone the repo**
    ```bash
-   git clone https://github.com/your-username/geek-desk.git
+   git clone https://github.com/geek-desk/geek-desk.git

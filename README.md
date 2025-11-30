@@ -4,7 +4,8 @@
 
 > A "Cloud Desktop" game built with jQuery and Supabase.
 
-![GeekDesk Screenshot](assets/screenshot_demo.png) <!-- 请替换为你的截图路径，建议放一张最漂亮的截图 -->
+![GeekDesk Screenshot](assets/win_demo.png) <!-- windows 11 desk -->
+![GeekDesk Screenshot](assets/mobile_demo.png) <!-- ios desk -->
 
 ## ✨ Features
 

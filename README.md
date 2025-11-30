@@ -1,8 +1,11 @@
+
 # 🖥️ GeekDesk (极客桌面)
 
 **GeekDesk** is a web-based cloud desktop simulator that brings the experience of Windows, macOS, Ubuntu, Android, and iOS directly to your browser. It allows users to customize their workspace, manage apps, and share their unique desktop setups with the world.
 
 > A "Cloud Desktop" game built with jQuery and Supabase.
+
+> 🚀 **Live Demo:** [https://geek-desk.github.io](https://geek-desk.github.io)
 
 ![GeekDesk Screenshot](assets/win_demo.png) <!-- windows 11 desk -->
 ![GeekDesk Screenshot](assets/mobile_demo.png) <!-- ios desk -->

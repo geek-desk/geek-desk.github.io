@@ -35,9 +35,7 @@ class DesktopManager {
         
         const cached = this.cachedLayouts[osName];
         
-        // === 关键修复：检查缓存有效性 ===
-        // 只有当缓存存在，且图标数组不为空时，才使用缓存
-        // 否则强制加载 config.js 里的 defaults
+        // 本地切换逻辑：如果有有效缓存则用缓存，否则用默认
         if (cached && cached.icons && cached.icons.length > 0) {
             this.folderData = cached.folders || {};
             if (cached.customWallpaper && cached.customWallpaper.indexOf('url') !== -1) {
@@ -45,12 +43,47 @@ class DesktopManager {
             }
             this.renderIcons(cached.icons);
         } else {
-            this.folderData = {};
-            const defaults = CONFIG.defaultIcons[osName] || [];
-            defaults.forEach(icon => {
-                this.addIcon('def-'+Date.now()+Math.random(), icon.name, icon.icon, icon.x, icon.y, '#desktop-stage', 'app', icon.color);
-            });
+            this.loadDefaults(osName);
+            // 尝试云端同步
             if (window.loadCloudDesktop) window.loadCloudDesktop();
+        }
+    }
+
+    // 封装加载默认图标的逻辑
+    loadDefaults(osName) {
+        this.folderData = {};
+        const defaults = CONFIG.defaultIcons[osName] || [];
+        defaults.forEach(icon => {
+            this.addIcon('def-'+Date.now()+Math.random(), icon.name, icon.icon, icon.x, icon.y, '#desktop-stage', 'app', icon.color);
+        });
+    }
+
+    // === 核心修复：加载云端数据时的防空判断 ===
+    loadLayout(data) {
+        if(!data) return;
+        this.cachedLayouts[this.currentOS] = data;
+        this.folderData = data.folders || {};
+        
+        // 1. 恢复壁纸 (如果有且有效)
+        if(data.customWallpaper && data.customWallpaper.indexOf('url') !== -1) {
+            $('#desktop-area').css('background-image', data.customWallpaper);
+        } else {
+            $('#desktop-area').css('background-image', CONFIG.wallpapers[this.currentOS]);
+        }
+
+        // 2. 恢复图标
+        // 关键逻辑：如果云端数据里的 icons 是空的 (length === 0)，说明是脏数据
+        // 此时不要清空桌面 (因为 switchOS 刚刚已经加载了默认图标)，或者强制重载默认
+        if (data.icons && data.icons.length > 0) {
+            $('#desktop-stage').empty(); // 只有当云端有真实图标时，才清空默认的
+            this.renderIcons(data.icons);
+        } else {
+            // 云端数据是空的？那我们不管它，保留 switchOS 刚才加载的默认图标
+            // 或者为了保险，强制再加载一次默认
+            // 如果桌面现在是空的，就加载默认
+            if ($('#desktop-stage .app-icon').length === 0) {
+                this.loadDefaults(this.currentOS);
+            }
         }
     }
 
@@ -223,18 +256,6 @@ class DesktopManager {
     
     exportLayout() { this.saveToMemory(this.currentOS); return this.cachedLayouts[this.currentOS]; }
     
-    loadLayout(data) {
-        if(!data) return;
-        this.cachedLayouts[this.currentOS] = data;
-        this.folderData = data.folders || {};
-        $('#desktop-stage').empty();
-        if(data.customWallpaper && data.customWallpaper.indexOf('url') !== -1) {
-            $('#desktop-area').css('background-image', data.customWallpaper);
-        } else {
-            $('#desktop-area').css('background-image', CONFIG.wallpapers[this.currentOS]);
-        }
-        if(data.icons) this.renderIcons(data.icons);
-    }
     
     renderIcons(icons) {
         icons.forEach(i => {

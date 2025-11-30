@@ -13,7 +13,6 @@ class DesktopManager {
         this.initContextMenu();
         this.initFolderWindow();
         
-        // 壁纸点击
         $(document).on('click', '.wallpaper-item', function() {
             const url = $(this).data('url');
             $('#desktop-area').css('background-image', `url(${url})`);
@@ -27,7 +26,6 @@ class DesktopManager {
         this.saveToMemory(this.currentOS);
         this.currentOS = osName;
 
-        // 1. 先应用 Config 中的默认壁纸 (这是“闪”的那一下，现在它是正确的)
         const bg = CONFIG.wallpapers[osName] || 'none';
         $('#desktop-area').removeClass().addClass(`os-${osName}`).css('background-image', bg);
         
@@ -35,18 +33,16 @@ class DesktopManager {
         this.renderSidebar(osName);
         $('#desktop-stage').empty();
         
-        // 2. 加载缓存数据
         const cached = this.cachedLayouts[osName];
-        if (cached && cached.icons) {
+        
+        // === 关键修复：检查缓存有效性 ===
+        // 只有当缓存存在，且图标数组不为空时，才使用缓存
+        // 否则强制加载 config.js 里的 defaults
+        if (cached && cached.icons && cached.icons.length > 0) {
             this.folderData = cached.folders || {};
-            
-            // === 修复核心：增加校验 ===
-            // 只有当缓存里的壁纸包含 "url" 字符时，才覆盖默认壁纸
-            // 这样如果是 "none" 或者 undefined，就会保留上面的默认壁纸
             if (cached.customWallpaper && cached.customWallpaper.indexOf('url') !== -1) {
                 $('#desktop-area').css('background-image', cached.customWallpaper);
             }
-            
             this.renderIcons(cached.icons);
         } else {
             this.folderData = {};
@@ -232,15 +228,11 @@ class DesktopManager {
         this.cachedLayouts[this.currentOS] = data;
         this.folderData = data.folders || {};
         $('#desktop-stage').empty();
-        
-        // === 修复核心：同上，增加校验 ===
         if(data.customWallpaper && data.customWallpaper.indexOf('url') !== -1) {
             $('#desktop-area').css('background-image', data.customWallpaper);
         } else {
-            // 如果存档里的壁纸坏了，恢复默认
             $('#desktop-area').css('background-image', CONFIG.wallpapers[this.currentOS]);
         }
-        
         if(data.icons) this.renderIcons(data.icons);
     }
     

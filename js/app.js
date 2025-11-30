@@ -4,18 +4,35 @@ $(document).ready(function() {
     
     window.desktopManager = new DesktopManager();
     initAuth();
-    applyTranslations(); // 应用语言
+    
+    // 初始化语言
+    updateLangButton();
+    applyTranslations();
+
+    // 语言切换按钮事件
+    $('#lang-toggle').click(function() {
+        // 切换语言
+        window.currentLang = window.currentLang === 'zh' ? 'en' : 'zh';
+        // 存入本地，下次记住
+        localStorage.setItem('app_lang', window.currentLang);
+        
+        // 更新界面
+        updateLangButton();
+        applyTranslations();
+        
+        // 重新渲染侧边栏（因为工具栏标题需要重新翻译）
+        window.desktopManager.renderSidebar(window.desktopManager.currentOS);
+    });
 
     // 切换系统
     $('#os-tabs button[data-os]').click(function() {
-        if($(this).attr('id') === 'btn-exit-view') return; // 排除退出按钮
+        if($(this).attr('id') === 'btn-exit-view') return;
         $('#os-tabs button[data-os]').removeClass('active');
         $(this).addClass('active');
         const os = $(this).data('os');
         window.desktopManager.switchOS(os);
     });
 
-    // 侧边栏折叠
     $('#sidebar-toggle-btn').click(function() {
         $('#sidebar').toggleClass('collapsed');
         const icon = $(this).find('i');
@@ -26,33 +43,37 @@ $(document).ready(function() {
         }
     });
 
-    // 弹窗
     $('#btn-login-modal').click(() => $('#modal-overlay').removeClass('hidden'));
     $('#btn-close-modal').click(() => $('#modal-overlay').addClass('hidden'));
     
-    // 保存
     $('#btn-save').click(() => {
-        // 获取公开状态
         const isPublic = $('#chk-public').is(':checked');
         if(window.saveDesktopData) window.saveDesktopData(isPublic);
     });
 
-    // 世界
     $('#btn-open-world').click(() => {
         if(window.loadWorldData) window.loadWorldData();
     });
     $('#btn-close-world').click(() => $('#world-overlay').addClass('hidden'));
 
-    // 退出查看模式
     $('#btn-exit-view').click(() => {
-        location.reload(); // 简单粗暴，刷新回自己主页
+        location.reload();
     });
 });
 
+function updateLangButton() {
+    // 按钮显示“切换到对方语言”的文字
+    const nextLangText = window.currentLang === 'zh' ? 'English' : '中文';
+    $('#lang-text').text(nextLangText);
+}
+
 function applyTranslations() {
-    const lang = navigator.language.startsWith('zh') ? 'zh' : 'en';
-    const dict = CONFIG.i18n[lang] || CONFIG.i18n.en;
+    if (!CONFIG || !CONFIG.i18n) return;
+
+    const lang = window.currentLang; // 使用全局变量
+    const dict = CONFIG.i18n[lang] || CONFIG.i18n['en'];
     
+    // 翻译带有 data-i18n 属性的元素
     $('[data-i18n]').each(function() {
         const key = $(this).data('i18n');
         if (dict[key]) {

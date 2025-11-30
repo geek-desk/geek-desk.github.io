@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>极客桌面</title>
+    <title>我的云桌面</title>
     <!-- 第三方库 -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -60,18 +60,21 @@
         .os-ubuntu #stage-wrapper { padding-left: 70px; }
         #desktop-stage { width: 100%; height: 100%; position: relative; }
 
-        /* === 手机外壳 (完美适配) === */
+        /* === 手机外壳 (固定高度修复版) === */
         .mobile-mode #stage-wrapper {
             width: 320px; 
-            height: 80vh; max-height: 720px; min-height: 500px;
-            margin: 60px auto 80px auto; 
-            position: relative; top: auto; left: auto; transform: none; 
+            /* 固定高度 680px，不再动态缩放，保证 Y=500 的图标永远在内部 */
+            height: 680px; 
+            /* 居中定位 */
+            margin: 60px auto 60px auto; 
+            
             border: 12px solid #1a1a1a; 
             border-radius: 40px;
             box-shadow: 0 0 0 4px #333, 0 20px 50px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.5);
             background-color: #000; 
             overflow: hidden; 
             padding: 0;
+            position: relative;
         }
         .mobile-mode #desktop-stage {
             display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
@@ -83,6 +86,19 @@
             position: relative; 
             padding-top: 40px; 
         }
+
+        /* 手机状态栏 */
+        .status-bar-mobile {
+            position: absolute;
+            top: 72px; /* Margin 60 + Border 12 = 72 */
+            left: 50%; transform: translateX(-50%);
+            width: 320px; height: 30px; 
+            padding: 0 25px; 
+            display: flex; justify-content: space-between; align-items: center;
+            color: white; font-weight: bold; font-size: 12px; z-index: 100;
+            pointer-events: none;
+        }
+        .status-bar-mobile .notch { width: 120px; height: 24px; background: #000; border-radius: 0 0 14px 14px; position: absolute; left: 50%; transform: translateX(-50%); top:-12px; }
 
         /* 图标 */
         .app-icon {
@@ -100,9 +116,8 @@
         .app-icon[data-type="folder"] i { color: #f1c40f !important; }
         .app-icon.selected { background: rgba(255,255,255,0.3); border: 1px dotted rgba(255,255,255,0.5); }
 
-        /* 系统 UI */
+        /* UI 组件 */
         .sys-ui { position: absolute; z-index: 90; }
-        
         .taskbar-win11 { bottom: 0; left: 0; right: 0; height: 48px; background: rgba(243, 243, 243, 0.85); backdrop-filter: blur(15px); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-top: 1px solid rgba(255,255,255,0.4); }
         .taskbar-win11 .start-btn { font-size: 22px; color: #0078d7; margin-right: 15px; cursor: pointer; transition: 0.2s; }
         .taskbar-win11 .start-btn:hover { transform: scale(1.1) rotate(5deg); }
@@ -117,17 +132,8 @@
         .dock-macos .dock-item:hover { transform: scale(1.2) translateY(-10px); }
 
         .dock-ubuntu { top: 50px; bottom: 0; left: 0; width: 64px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
-        .dock-ubuntu .dock-item { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-bottom: 12px; color: white; cursor: pointer; transition: 0.2s; position: relative; left: 0; }
+        .dock-ubuntu .dock-item { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-bottom: 12px; color: white; cursor: pointer; transition: 0.2s; }
         .dock-ubuntu .dock-item:hover { background: rgba(255,255,255,0.2); left: 5px; }
-
-        .status-bar-mobile {
-            position: absolute; top: 72px; left: 50%; transform: translateX(-50%);
-            width: 320px; height: 30px; padding: 0 25px; 
-            display: flex; justify-content: space-between; align-items: center;
-            color: white; font-weight: bold; font-size: 12px; z-index: 100;
-            pointer-events: none;
-        }
-        .status-bar-mobile .notch { width: 120px; height: 24px; background: #000; border-radius: 0 0 14px 14px; position: absolute; left: 50%; transform: translateX(-50%); top:-12px; }
 
         #folder-window { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 300px; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 20px 60px rgba(0,0,0,0.4); z-index: 200; display: flex; flex-direction: column; }
         .folder-header { height: 45px; background: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-radius: 12px 12px 0 0; font-weight: bold; color: #333; }
@@ -150,7 +156,6 @@
         }
         #sidebar.collapsed { transform: translateX(100%); }
         #sidebar-toggle-btn { position: absolute; left: -32px; top: 50%; transform: translateY(-50%); width: 32px; height: 60px; background: #f8f9fa; border: 1px solid #ddd; border-right: none; border-radius: 8px 0 0 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; box-shadow: -3px 0 8px rgba(0,0,0,0.05); z-index: 201; }
-        
         .ad-slot { height: 80px; background: #e9ecef; display: flex; align-items: center; justify-content: center; color: #adb5bd; font-size: 12px; border-bottom: 1px solid #ddd; flex-shrink: 0; overflow: hidden; }
         .world-link-btn { padding: 15px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; text-align: center; font-weight: bold; cursor: pointer; flex-shrink: 0; }
         #user-panel { padding: 15px; background: white; border-bottom: 1px solid #eee; flex-shrink: 0; }
@@ -164,7 +169,6 @@
         .cat-title::after { content: '\f078'; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 12px; color: #999; transition: transform 0.3s ease; }
         .category.collapsed .cat-content { display: none; }
         .category.collapsed .cat-title::after { transform: rotate(-90deg); }
-        
         .cat-content { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: #fff; }
         .cat-content.wallpapers { grid-template-columns: 1fr 1fr; }
         .wallpaper-item { height: 60px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; background-size: cover; background-position: center; transition: 0.2s; }
@@ -263,7 +267,7 @@
             </div>
 
             <div id="folder-window" class="hidden"><div class="folder-header"><span id="folder-title">文件夹</span><button id="btn-close-folder"><i class="fa-solid fa-xmark"></i></button></div><div id="folder-content"></div></div>
-            <ul id="context-menu" class="hidden"><li id="ctx-new-folder"><i class="fa-solid fa-folder-plus"></i> New Folder</li><li id="ctx-rename"><i class="fa-solid fa-pen-to-square"></i> Rename</li><li class="separator"></li><li id="ctx-delete" style="color:#ff7675"><i class="fa-solid fa-trash"></i> Delete</li></ul>
+            <ul id="context-menu" class="hidden"><li id="ctx-new-folder">New Folder</li><li id="ctx-rename">Rename</li><li id="ctx-delete">Delete</li></ul>
         </div>
 
         <!-- 右侧 -->
@@ -293,13 +297,13 @@
             </div>
 
             <div id="fav-btn-container" class="hidden">
-                <div class="fav-link-btn" id="btn-my-favs"><i class="fa-solid fa-star"></i> Favorites</div>
+                <div class="fav-link-btn" id="btn-my-favs"><i class="fa-solid fa-star"></i> 我的收藏夹</div>
             </div>
 
             <div class="toolbox" id="dynamic-toolbox"></div>
             
             <div id="comments-panel" class="hidden">
-                <div style="padding:10px;font-weight:bold;border-bottom:1px solid #eee;">Comment</div>
+                <div style="padding:10px;font-weight:bold;border-bottom:1px solid #eee;">留言</div>
                 <div id="comments-list"></div>
                 <div class="comment-input-area">
                     <input type="text" id="inp-comment" placeholder="..." data-i18n="comment_ph">
@@ -312,10 +316,10 @@
     <!-- 弹窗 -->
     <div id="modal-overlay" class="overlay hidden">
         <div class="modal-box">
-            <h3 data-i18n="login_btn">Account</h3>
+            <h3 data-i18n="login_btn">账号登录</h3>
             <input type="email" id="email" placeholder="邮箱" autocomplete="username">
             <input type="password" id="password" placeholder="密码" autocomplete="current-password">
-            <div class="form-actions"><button id="btn-do-login" class="btn-primary">Login</button><button id="btn-do-signup" class="btn-secondary">Sign Up</button></div>
+            <div class="form-actions"><button id="btn-do-login" class="btn-primary">登录</button><button id="btn-do-signup" class="btn-secondary">注册</button></div>
             <button id="btn-close-modal" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
     </div>
